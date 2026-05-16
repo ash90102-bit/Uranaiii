@@ -809,7 +809,7 @@ function buildReading() {
       flipped = true;
       flipCard.classList.add('flipped');
       flipCard.style.cursor = 'default';
-      triggerFlipEffect(flipCard);
+      if (drawn.card.suit === 'major') triggerFlipEffect(flipCard);
       state.flippedCount++;
       if (state.flippedCount === state.drawnCards.length) {
         setTimeout(() => showReadingResult(), 700);
