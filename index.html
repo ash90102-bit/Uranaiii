@@ -62,18 +62,18 @@
     .fan-title{font-family:'Cinzel',serif;font-size:.85rem;color:var(--purple-light);letter-spacing:.15em;text-align:center}
     .pick-counter{font-size:.95rem;color:var(--text);text-align:center;opacity:.88}
     .fan-container{position:relative;width:100%;max-width:680px;margin:.5rem auto}
-    .pick-rows{display:flex;flex-direction:column;gap:10px;width:100%}
-    .pick-row{display:flex;flex-wrap:nowrap;padding-bottom:8px}
-    .pick-card{width:56px;height:90px;flex-shrink:0;margin-right:-36px;background:linear-gradient(160deg,#140030,#090018);border:1px solid rgba(212,168,67,.28);border-radius:6px;cursor:pointer;position:relative;transition:margin-right .18s ease,transform .18s ease,box-shadow .18s,border-color .15s;z-index:1}
+    .pick-rows{display:flex;flex-direction:column;width:100%;overflow-x:auto;padding-bottom:4px}
+    .pick-row{display:flex;flex-wrap:nowrap;padding:4px 0 12px}
+    .pick-card{width:56px;height:90px;flex-shrink:0;margin-right:-48px;background:linear-gradient(160deg,#140030,#090018);border:1px solid rgba(212,168,67,.28);border-radius:6px;cursor:pointer;position:relative;transition:margin-right .18s ease,transform .18s ease,box-shadow .18s,border-color .15s;z-index:1}
     .pick-card:last-child{margin-right:0}
     .pick-card-inner{width:100%;height:100%;display:flex;align-items:center;justify-content:center;border-radius:5px;pointer-events:none}
     .pick-card-sym{font-size:.85rem;color:rgba(212,168,67,.3)}
-    .pick-card:hover{margin-right:-18px;transform:translateY(-8px);box-shadow:0 6px 16px rgba(0,0,0,.5),0 0 10px rgba(212,168,67,.3);border-color:rgba(212,168,67,.6);z-index:30}
-    .pick-card.picked{margin-right:-18px;transform:translateY(-10px);border-color:var(--gold);background:linear-gradient(160deg,#1e0042,#0d001e);box-shadow:0 6px 20px rgba(0,0,0,.5),0 0 16px rgba(212,168,67,.55);z-index:30}
+    .pick-card:hover{margin-right:-28px;transform:translateY(-10px);box-shadow:0 8px 20px rgba(0,0,0,.5),0 0 12px rgba(212,168,67,.35);border-color:rgba(212,168,67,.6);z-index:30}
+    .pick-card.picked{margin-right:-28px;transform:translateY(-12px);border-color:var(--gold);background:linear-gradient(160deg,#1e0042,#0d001e);box-shadow:0 8px 24px rgba(0,0,0,.5),0 0 18px rgba(212,168,67,.6);z-index:30}
     .pick-card.picked .pick-card-sym{color:rgba(212,168,67,.75)}
     @media(max-width:520px){
-      .pick-card{width:44px;height:70px;margin-right:-28px;border-radius:4px}
-      .pick-card:hover,.pick-card.picked{margin-right:-12px}
+      .pick-card{width:44px;height:70px;margin-right:-36px}
+      .pick-card:hover,.pick-card.picked{margin-right:-20px}
     }
 
     /* Reading phase */
@@ -672,21 +672,16 @@ function buildGridPick() {
   const rowsEl = document.createElement('div');
   rowsEl.className = 'pick-rows';
 
-  const perRow = 26; // 3 rows of 26 = 78
-  for (let r = 0; r < 3; r++) {
-    const rowEl = document.createElement('div');
-    rowEl.className = 'pick-row';
-    const start = r * perRow;
-    const end = Math.min(start + perRow, 78);
-    for (let i = start; i < end; i++) {
-      const el = document.createElement('div');
-      el.className = 'pick-card';
-      el.innerHTML = '<div class="pick-card-inner"><span class="pick-card-sym">✦</span></div>';
-      el.addEventListener('click', () => handleGridPick(el, i));
-      rowEl.appendChild(el);
-    }
-    rowsEl.appendChild(rowEl);
+  const rowEl = document.createElement('div');
+  rowEl.className = 'pick-row';
+  for (let i = 0; i < 78; i++) {
+    const el = document.createElement('div');
+    el.className = 'pick-card';
+    el.innerHTML = '<div class="pick-card-inner"><span class="pick-card-sym">✦</span></div>';
+    el.addEventListener('click', () => handleGridPick(el, i));
+    rowEl.appendChild(el);
   }
+  rowsEl.appendChild(rowEl);
 
   container.appendChild(rowsEl);
   document.getElementById('btn-confirm-pick').classList.add('hidden');
