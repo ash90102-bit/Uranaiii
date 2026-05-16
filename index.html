@@ -8,442 +8,156 @@
   <style>
     :root {
       --gold: #d4a843;
-      --gold-dim: rgba(212, 168, 67, 0.4);
-      --gold-glow: rgba(212, 168, 67, 0.2);
+      --gold-dim: rgba(212,168,67,.4);
+      --gold-glow: rgba(212,168,67,.2);
       --purple-light: #c8b4e8;
       --purple-mid: #9b7dca;
       --text: #e8d5b7;
-      --bg-card: rgba(12, 2, 30, 0.9);
-      --border: rgba(212, 168, 67, 0.35);
+      --bg-card: rgba(12,2,30,.9);
+      --border: rgba(212,168,67,.35);
     }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    body{min-height:100vh;background:#050010;font-family:'Noto Serif JP',serif;color:var(--text);overflow-x:hidden}
+    #bg-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+    .app{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;min-height:100vh;padding:3rem 1.5rem 4rem}
 
-    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    /* Header */
+    .header{text-align:center;margin-bottom:3rem}
+    .header-title{font-family:'Cinzel Decorative',serif;font-size:clamp(1.6rem,4vw,2.8rem);color:var(--gold);text-shadow:0 0 30px rgba(212,168,67,.5);letter-spacing:.08em;margin-bottom:.5rem}
+    .header-sub{font-family:'Cinzel',serif;font-size:.9rem;color:var(--purple-light);letter-spacing:.2em;opacity:.8}
 
-    body {
-      min-height: 100vh;
-      background: #050010;
-      font-family: 'Noto Serif JP', serif;
-      color: var(--text);
-      overflow-x: hidden;
-    }
+    /* Divider */
+    .divider{width:100%;max-width:520px;height:1px;background:linear-gradient(90deg,transparent,var(--gold-dim),transparent);margin:2rem 0}
 
-    #bg-canvas {
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 0;
-      pointer-events: none;
-    }
+    /* Phase containers */
+    .phase{width:100%;max-width:680px;display:flex;flex-direction:column;align-items:center;gap:1.5rem}
+    .phase.hidden{display:none}
 
-    .app {
-      position: relative;
-      z-index: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-      padding: 3rem 1.5rem 4rem;
-    }
+    /* Question phase */
+    .question-label{font-size:.9rem;color:var(--purple-light);letter-spacing:.1em;text-align:center;margin-bottom:.5rem}
+    .question-area{width:100%;max-width:520px;background:rgba(20,5,45,.8);border:1px solid var(--border);border-radius:12px;padding:1.5rem;backdrop-filter:blur(6px)}
+    .question-input{width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(212,168,67,.25);border-radius:8px;color:var(--text);font-family:'Noto Serif JP',serif;font-size:1rem;padding:.9rem 1.1rem;resize:vertical;min-height:90px;outline:none;transition:border-color .3s}
+    .question-input:focus{border-color:rgba(212,168,67,.6);box-shadow:0 0 12px rgba(212,168,67,.1)}
+    .question-input::placeholder{color:rgba(232,213,183,.3)}
 
-    /* ── Header ── */
-    .header {
-      text-align: center;
-      margin-bottom: 3rem;
-    }
+    /* Buttons */
+    .btn{font-family:'Cinzel',serif;font-size:.9rem;letter-spacing:.12em;padding:.8rem 2.2rem;border-radius:30px;border:none;cursor:pointer;transition:all .3s;outline:none;display:inline-flex;align-items:center;gap:.5rem}
+    .btn-gold{background:linear-gradient(135deg,#c9952a,#e8b84b);color:#0a0005;font-weight:700;box-shadow:0 4px 20px rgba(212,168,67,.35)}
+    .btn-gold:hover{transform:translateY(-2px);box-shadow:0 6px 28px rgba(212,168,67,.5)}
+    .btn-gold:disabled{opacity:.4;cursor:not-allowed;transform:none}
+    .btn-outline{background:transparent;border:1px solid var(--gold-dim);color:var(--gold);padding:.65rem 1.6rem;font-size:.85rem}
+    .btn-outline:hover{border-color:var(--gold);background:rgba(212,168,67,.08)}
 
-    .main-title {
-      font-family: 'Cinzel Decorative', cursive;
-      font-size: clamp(1.8rem, 5vw, 3rem);
-      color: var(--gold);
-      letter-spacing: 0.08em;
-      animation: titleGlow 4s ease-in-out infinite;
-    }
+    /* Spread selection */
+    .spread-title{font-family:'Cinzel',serif;font-size:.85rem;color:var(--purple-light);letter-spacing:.18em;text-align:center}
+    .spread-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;width:100%;max-width:520px}
+    .spread-card{background:rgba(20,5,45,.85);border:1px solid rgba(212,168,67,.25);border-radius:12px;padding:1.2rem 1rem;cursor:pointer;transition:all .3s;text-align:center;backdrop-filter:blur(6px);display:flex;flex-direction:column;gap:.4rem}
+    .spread-card:hover{border-color:rgba(212,168,67,.55);background:rgba(30,8,60,.9);transform:translateY(-3px);box-shadow:0 8px 24px rgba(212,168,67,.12)}
+    .spread-card.selected{border-color:var(--gold);background:rgba(40,12,70,.9);box-shadow:0 0 20px rgba(212,168,67,.25)}
+    .spread-card-name{font-family:'Cinzel',serif;font-size:1rem;color:var(--gold);letter-spacing:.06em}
+    .spread-card-count{font-size:.78rem;color:var(--purple-light);opacity:.8}
+    .spread-card-desc{font-size:.8rem;color:var(--text);opacity:.7;margin-top:.2rem}
 
-    .main-subtitle {
-      margin-top: 0.5rem;
-      font-size: 0.85rem;
-      color: var(--purple-mid);
-      letter-spacing: 0.35em;
-    }
+    /* Fan pick phase */
+    .fan-title{font-family:'Cinzel',serif;font-size:.85rem;color:var(--purple-light);letter-spacing:.15em;text-align:center}
+    .pick-counter{font-size:.9rem;color:var(--text);text-align:center;opacity:.85}
+    .fan-container{position:relative;height:280px;width:100%;max-width:680px;margin:1rem auto}
+    .fan-card{position:absolute;width:72px;height:116px;border-radius:8px;cursor:pointer;transition:transform .25s ease,box-shadow .25s;bottom:0;transform-origin:bottom center;user-select:none}
+    .fan-card .card-back-inner{width:100%;height:100%;border-radius:8px;background:linear-gradient(160deg,#140030,#090018);border:1.5px solid rgba(212,168,67,.45);display:flex;align-items:center;justify-content:center;font-size:1.4rem;box-shadow:0 4px 16px rgba(0,0,0,.5)}
+    .fan-card.picked .card-back-inner{border-color:var(--gold);box-shadow:0 0 18px rgba(212,168,67,.6),0 4px 16px rgba(0,0,0,.5)}
+    .fan-card:hover .card-back-inner{box-shadow:0 0 12px rgba(212,168,67,.3),0 4px 16px rgba(0,0,0,.5)}
 
-    @keyframes titleGlow {
-      0%, 100% { text-shadow: 0 0 20px rgba(212,168,67,.5), 0 0 40px rgba(212,168,67,.2); }
-      50%       { text-shadow: 0 0 30px rgba(212,168,67,.8), 0 0 60px rgba(212,168,67,.4), 0 0 90px rgba(212,168,67,.15); }
-    }
+    /* Reading phase */
+    .reading-question{font-size:.9rem;color:var(--purple-light);text-align:center;opacity:.8;font-style:italic;max-width:520px}
+    .cards-row{display:flex;flex-wrap:wrap;justify-content:center;gap:1.2rem;width:100%;max-width:680px}
+    .card-slot{display:flex;flex-direction:column;align-items:center;gap:.6rem}
+    .card-position-label{font-size:.72rem;color:var(--purple-light);letter-spacing:.1em;text-align:center;opacity:.75}
 
-    /* ── Phases ── */
-    .phase { width: 100%; max-width: 680px; animation: fadeUp .6s ease both; }
-    .phase.hidden { display: none !important; }
+    /* Flip card */
+    .flip-card{width:100px;height:160px;perspective:900px;cursor:pointer}
+    .flip-card-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform .7s cubic-bezier(.4,0,.2,1)}
+    .flip-card.flipped .flip-card-inner{transform:rotateY(180deg)}
+    .flip-card-face,.flip-card-back{position:absolute;inset:0;border-radius:10px;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+    .flip-card-back{background:linear-gradient(160deg,#140030,#090018);border:1.5px solid rgba(212,168,67,.45);display:flex;align-items:center;justify-content:center;font-size:2rem;box-shadow:0 4px 20px rgba(0,0,0,.6)}
+    .flip-card-face{transform:rotateY(180deg);overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.7)}
 
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(24px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
+    /* Card face styles per suit */
+    .flip-card-face[data-suit="major"]{background:linear-gradient(160deg,#140030,#090018);border:1.5px solid rgba(212,168,67,.55)}
+    .flip-card-face[data-suit="wands"]{background:linear-gradient(160deg,#2a0a00,#180500);border:1.5px solid rgba(212,120,67,.55)}
+    .flip-card-face[data-suit="cups"]{background:linear-gradient(160deg,#001830,#000d1a);border:1.5px solid rgba(67,168,212,.55)}
+    .flip-card-face[data-suit="swords"]{background:linear-gradient(160deg,#0a0f20,#050812);border:1.5px solid rgba(141,164,200,.55)}
+    .flip-card-face[data-suit="pentacles"]{background:linear-gradient(160deg,#061a06,#020c02);border:1.5px solid rgba(106,184,106,.55)}
 
-    /* ── Input phase ── */
-    .phase-label {
-      text-align: center;
-      font-size: 1.05rem;
-      color: var(--purple-light);
-      margin-bottom: 1.6rem;
-      letter-spacing: 0.05em;
-    }
+    /* Card content (inner wrapper for reversed flip) */
+    .card-content{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:.5rem .3rem;gap:.25rem;transition:transform .3s}
+    .card-content.reversed{transform:rotate(180deg)}
 
-    .crystal-orb {
-      width: 80px;
-      height: 80px;
-      margin: 0 auto 2rem;
-      border-radius: 50%;
-      background: radial-gradient(circle at 35% 35%, #9f6ee0, #4a1070 60%, #1a0040);
-      box-shadow: 0 0 30px rgba(155,61,171,.5), 0 0 60px rgba(155,61,171,.2), inset 0 0 20px rgba(255,255,255,.1);
-      animation: orbPulse 3s ease-in-out infinite;
-    }
+    .card-sym{font-size:1.6rem;line-height:1}
+    .card-num{font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.1em;opacity:.7}
+    .card-name-ja{font-family:'Noto Serif JP',serif;font-size:.58rem;text-align:center;line-height:1.3;font-weight:700}
+    .card-name-en{font-family:'Cinzel',serif;font-size:.42rem;letter-spacing:.05em;opacity:.6;text-align:center}
+    .card-reversed-badge{font-size:.48rem;letter-spacing:.08em;padding:.15rem .4rem;border-radius:4px;margin-top:.1rem}
 
-    @keyframes orbPulse {
-      0%, 100% { box-shadow: 0 0 30px rgba(155,61,171,.5), 0 0 60px rgba(155,61,171,.2); }
-      50%       { box-shadow: 0 0 50px rgba(155,61,171,.8), 0 0 100px rgba(155,61,171,.3); }
-    }
+    /* Suit accent colors for text */
+    [data-suit="major"] .card-sym,[data-suit="major"] .card-name-ja,[data-suit="major"] .card-num{color:#d4a843}
+    [data-suit="major"] .card-reversed-badge{background:rgba(212,168,67,.15);color:#d4a843;border:1px solid rgba(212,168,67,.3)}
+    [data-suit="wands"] .card-sym,[data-suit="wands"] .card-name-ja,[data-suit="wands"] .card-num{color:#d47843}
+    [data-suit="wands"] .card-reversed-badge{background:rgba(212,120,67,.15);color:#d47843;border:1px solid rgba(212,120,67,.3)}
+    [data-suit="cups"] .card-sym,[data-suit="cups"] .card-name-ja,[data-suit="cups"] .card-num{color:#43a8d4}
+    [data-suit="cups"] .card-reversed-badge{background:rgba(67,168,212,.15);color:#43a8d4;border:1px solid rgba(67,168,212,.3)}
+    [data-suit="swords"] .card-sym,[data-suit="swords"] .card-name-ja,[data-suit="swords"] .card-num{color:#8da4c8}
+    [data-suit="swords"] .card-reversed-badge{background:rgba(141,164,200,.15);color:#8da4c8;border:1px solid rgba(141,164,200,.3)}
+    [data-suit="pentacles"] .card-sym,[data-suit="pentacles"] .card-name-ja,[data-suit="pentacles"] .card-num{color:#6ab86a}
+    [data-suit="pentacles"] .card-reversed-badge{background:rgba(106,184,106,.15);color:#6ab86a;border:1px solid rgba(106,184,106,.3)}
 
-    textarea.q-input {
-      width: 100%;
-      padding: 1.2rem 1.4rem;
-      background: rgba(255,255,255,.04);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      color: var(--text);
-      font-family: 'Noto Serif JP', serif;
-      font-size: 1rem;
-      resize: none;
-      outline: none;
-      transition: border-color .3s, box-shadow .3s, background .3s;
-      backdrop-filter: blur(8px);
-    }
+    /* Reading result */
+    .reading-result{width:100%;max-width:680px;display:flex;flex-direction:column;gap:1.2rem;margin-top:.5rem}
+    .reading-result.hidden{display:none}
+    .reading-card-block{background:rgba(12,2,30,.85);border-radius:14px;padding:1.4rem 1.6rem;backdrop-filter:blur(8px);border-left:3px solid var(--gold)}
+    .reading-card-block[data-suit="wands"]{border-left-color:#d47843}
+    .reading-card-block[data-suit="cups"]{border-left-color:#43a8d4}
+    .reading-card-block[data-suit="swords"]{border-left-color:#8da4c8}
+    .reading-card-block[data-suit="pentacles"]{border-left-color:#6ab86a}
+    .reading-block-header{display:flex;align-items:center;gap:.7rem;margin-bottom:.75rem;flex-wrap:wrap}
+    .reading-position{font-size:.72rem;color:var(--purple-light);letter-spacing:.12em;opacity:.8}
+    .reading-card-title{font-family:'Cinzel',serif;font-size:1rem;color:var(--gold);letter-spacing:.06em}
+    .reading-card-block[data-suit="wands"] .reading-card-title{color:#d47843}
+    .reading-card-block[data-suit="cups"] .reading-card-title{color:#43a8d4}
+    .reading-card-block[data-suit="swords"] .reading-card-title{color:#8da4c8}
+    .reading-card-block[data-suit="pentacles"] .reading-card-title{color:#6ab86a}
+    .reading-reversed-tag{font-size:.68rem;padding:.2rem .6rem;border-radius:20px;background:rgba(212,168,67,.12);border:1px solid rgba(212,168,67,.3);color:var(--gold)}
+    .reading-kw{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.65rem}
+    .reading-kw span{font-size:.72rem;padding:.25rem .65rem;border-radius:20px;background:rgba(212,168,67,.08);border:1px solid rgba(212,168,67,.2);color:var(--gold);letter-spacing:.05em}
+    .reading-card-block[data-suit="wands"] .reading-kw span{background:rgba(212,120,67,.08);border-color:rgba(212,120,67,.2);color:#d47843}
+    .reading-card-block[data-suit="cups"] .reading-kw span{background:rgba(67,168,212,.08);border-color:rgba(67,168,212,.2);color:#43a8d4}
+    .reading-card-block[data-suit="swords"] .reading-kw span{background:rgba(141,164,200,.08);border-color:rgba(141,164,200,.2);color:#8da4c8}
+    .reading-card-block[data-suit="pentacles"] .reading-kw span{background:rgba(106,184,106,.08);border-color:rgba(106,184,106,.2);color:#6ab86a}
+    .reading-msg{font-size:.9rem;line-height:1.85;color:var(--text);opacity:.9}
 
-    textarea.q-input::placeholder { color: rgba(200,180,232,.45); }
+    /* Shuffle animation */
+    .shuffle-overlay{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:rgba(5,0,16,.85);backdrop-filter:blur(4px);flex-direction:column;gap:1.5rem}
+    .shuffle-overlay.hidden{display:none}
+    .shuffle-text{font-family:'Cinzel',serif;font-size:1rem;color:var(--gold);letter-spacing:.2em;animation:pulse 1.5s ease-in-out infinite}
+    .shuffle-cards{display:flex;gap:.5rem}
+    .shuffle-mini{width:32px;height:52px;border-radius:5px;background:linear-gradient(160deg,#140030,#090018);border:1.5px solid rgba(212,168,67,.45);animation:shuffleAnim 1.2s ease-in-out infinite}
+    .shuffle-mini:nth-child(2){animation-delay:.15s}
+    .shuffle-mini:nth-child(3){animation-delay:.3s}
+    .shuffle-mini:nth-child(4){animation-delay:.45s}
+    .shuffle-mini:nth-child(5){animation-delay:.6s}
+    @keyframes shuffleAnim{0%,100%{transform:translateY(0)}50%{transform:translateY(-18px)}}
+    @keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
 
-    textarea.q-input:focus {
-      border-color: rgba(212,168,67,.8);
-      box-shadow: 0 0 24px var(--gold-glow);
-      background: rgba(255,255,255,.07);
-    }
+    /* Misc */
+    .star-deco{color:var(--gold);opacity:.5;font-size:.9rem;letter-spacing:.4em}
+    .reset-area{margin-top:2rem;text-align:center}
 
-    textarea.q-input.error { border-color: rgba(220,60,60,.8); }
-
-    .btn-primary {
-      display: block;
-      width: 100%;
-      margin-top: 1.4rem;
-      padding: 1.15rem;
-      background: linear-gradient(135deg, #7b2d8b, #4a1070);
-      border: 1px solid rgba(212,168,67,.55);
-      border-radius: 14px;
-      color: var(--gold);
-      font-family: 'Noto Serif JP', serif;
-      font-size: 1.05rem;
-      letter-spacing: 0.25em;
-      cursor: pointer;
-      transition: background .3s, box-shadow .3s, transform .15s;
-    }
-
-    .btn-primary:hover {
-      background: linear-gradient(135deg, #9b3dab, #6a2090);
-      box-shadow: 0 0 32px rgba(212,168,67,.3);
-      transform: translateY(-2px);
-    }
-
-    .btn-primary:active { transform: translateY(0); }
-
-    /* ── Shuffle phase ── */
-    .shuffle-msg {
-      text-align: center;
-      font-size: 1.1rem;
-      color: var(--purple-light);
-      margin-bottom: 2.5rem;
-      letter-spacing: 0.1em;
-    }
-
-    .loading-dots {
-      display: flex;
-      justify-content: center;
-      gap: .6rem;
-    }
-
-    .loading-dots span {
-      width: 12px; height: 12px;
-      background: var(--gold);
-      border-radius: 50%;
-      animation: dotBounce 1.4s ease-in-out infinite;
-    }
-
-    .loading-dots span:nth-child(2) { animation-delay: .2s; }
-    .loading-dots span:nth-child(3) { animation-delay: .4s; }
-
-    @keyframes dotBounce {
-      0%, 80%, 100% { transform: scale(.3); opacity: .4; }
-      40%            { transform: scale(1);   opacity: 1; }
-    }
-
-    /* ── Cards phase ── */
-    .spread-label {
-      text-align: center;
-      font-size: .8rem;
-      color: var(--purple-mid);
-      letter-spacing: .35em;
-      margin-bottom: .6rem;
-    }
-
-    .q-display {
-      text-align: center;
-      font-size: 1.05rem;
-      color: var(--gold);
-      padding: .9rem 1.2rem;
-      border-top: 1px solid rgba(212,168,67,.2);
-      border-bottom: 1px solid rgba(212,168,67,.2);
-      margin-bottom: 1.6rem;
-    }
-
-    .reveal-hint {
-      text-align: center;
-      font-size: .85rem;
-      color: var(--purple-mid);
-      letter-spacing: .2em;
-      margin-bottom: 2rem;
-    }
-
-    .cards-row {
-      display: flex;
-      justify-content: center;
-      gap: 2rem;
-      flex-wrap: wrap;
-    }
-
-    .card-slot {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: .7rem;
-      animation: fadeUp .5s ease both;
-    }
-
-    .card-slot:nth-child(2) { animation-delay: .15s; }
-    .card-slot:nth-child(3) { animation-delay: .3s; }
-
-    .pos-label {
-      font-size: .78rem;
-      color: var(--purple-mid);
-      letter-spacing: .25em;
-    }
-
-    /* 3D flip card */
-    .card-flip {
-      width: 148px;
-      height: 248px;
-      perspective: 1200px;
-      cursor: pointer;
-    }
-
-    .card-flip .inner {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      transform-style: preserve-3d;
-      transition: transform .85s cubic-bezier(.4,0,.2,1);
-    }
-
-    .card-flip.flipped .inner { transform: rotateY(180deg); }
-
-    .card-face, .card-back {
-      position: absolute;
-      inset: 0;
-      border-radius: 14px;
-      border: 1px solid rgba(212,168,67,.55);
-      backface-visibility: hidden;
-    }
-
-    .card-back {
-      background: linear-gradient(150deg, #180440 0%, #0c0128 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 8px 32px rgba(0,0,0,.6), 0 0 18px rgba(155,61,171,.25);
-      transition: box-shadow .3s;
-    }
-
-    .card-flip:hover .card-back {
-      box-shadow: 0 8px 40px rgba(0,0,0,.6), 0 0 35px rgba(155,61,171,.5);
-    }
-
-    .card-back-inner {
-      width: 76%;
-      height: 78%;
-      border: 1px solid rgba(212,168,67,.22);
-      border-radius: 10px;
-      background: repeating-linear-gradient(
-        45deg,
-        rgba(212,168,67,.04) 0px,
-        rgba(212,168,67,.04) 2px,
-        transparent 2px,
-        transparent 12px
-      );
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .card-back-rune {
-      font-size: 2.2rem;
-      color: rgba(212,168,67,.3);
-      user-select: none;
-    }
-
-    .card-face {
-      background: linear-gradient(160deg, #140030 0%, #090018 100%);
-      transform: rotateY(180deg);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: space-between;
-      padding: 1rem .8rem;
-      box-shadow: 0 8px 32px rgba(0,0,0,.6), 0 0 25px rgba(212,168,67,.2);
-    }
-
-    .card-face.reversed { transform: rotateY(180deg) rotate(180deg); }
-
-    .c-number {
-      font-family: 'Cinzel', cursive;
-      font-size: .65rem;
-      color: rgba(212,168,67,.65);
-      letter-spacing: .2em;
-      align-self: flex-start;
-    }
-
-    .c-symbol { font-size: 2.8rem; filter: drop-shadow(0 0 10px rgba(212,168,67,.45)); }
-
-    .c-names { text-align: center; }
-    .c-name-ja { font-size: 1rem; font-weight: 700; color: var(--text); }
-    .c-name-en { font-family: 'Cinzel', cursive; font-size: .58rem; color: rgba(212,168,67,.55); letter-spacing: .08em; }
-    .c-rev-badge {
-      font-size: .6rem;
-      color: #c06060;
-      letter-spacing: .12em;
-      margin-top: .25rem;
-    }
-
-    /* ── Reading phase ── */
-    .reading-title {
-      text-align: center;
-      font-size: 1.2rem;
-      color: var(--gold);
-      letter-spacing: .2em;
-      margin-bottom: .5rem;
-    }
-
-    .reading-q {
-      text-align: center;
-      font-size: .85rem;
-      color: var(--purple-mid);
-      margin-bottom: 2rem;
-      letter-spacing: .05em;
-    }
-
-    .card-reading {
-      background: rgba(255,255,255,.035);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 1.4rem;
-      margin-bottom: 1.4rem;
-      backdrop-filter: blur(6px);
-      animation: fadeUp .5s ease both;
-    }
-
-    .card-reading:nth-child(3) { animation-delay: .15s; }
-    .card-reading:nth-child(4) { animation-delay: .3s; }
-
-    .reading-card-header {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      margin-bottom: .9rem;
-    }
-
-    .r-symbol { font-size: 1.8rem; }
-
-    .r-pos { font-size: .7rem; color: var(--purple-mid); letter-spacing: .2em; }
-    .r-name { font-size: 1rem; color: var(--gold); font-weight: 700; margin-top: .15rem; }
-
-    .r-text {
-      font-size: .92rem;
-      line-height: 1.85;
-      color: var(--purple-light);
-    }
-
-    .keywords {
-      display: flex;
-      flex-wrap: wrap;
-      gap: .4rem;
-      margin-top: .8rem;
-    }
-
-    .kw-tag {
-      font-size: .72rem;
-      padding: .2rem .65rem;
-      border: 1px solid rgba(212,168,67,.28);
-      border-radius: 20px;
-      color: var(--purple-mid);
-    }
-
-    .overall-box {
-      background: rgba(212,168,67,.05);
-      border: 1px solid rgba(212,168,67,.4);
-      border-radius: 14px;
-      padding: 1.5rem;
-      margin-top: .5rem;
-      animation: fadeUp .5s ease .45s both;
-    }
-
-    .overall-title {
-      text-align: center;
-      font-size: .85rem;
-      color: var(--gold);
-      letter-spacing: .3em;
-      margin-bottom: 1rem;
-    }
-
-    .overall-text {
-      font-size: .93rem;
-      line-height: 1.9;
-      color: var(--text);
-    }
-
-    .btn-again {
-      display: block;
-      width: 100%;
-      max-width: 380px;
-      margin: 2.5rem auto 0;
-      padding: .95rem;
-      background: transparent;
-      border: 1px solid rgba(212,168,67,.45);
-      border-radius: 14px;
-      color: var(--gold);
-      font-family: 'Noto Serif JP', serif;
-      font-size: .95rem;
-      letter-spacing: .25em;
-      cursor: pointer;
-      transition: background .3s, box-shadow .3s;
-    }
-
-    .btn-again:hover {
-      background: rgba(212,168,67,.08);
-      box-shadow: 0 0 22px rgba(212,168,67,.2);
-    }
-
-    /* ── Responsive ── */
-    @media (max-width: 520px) {
-      .card-flip { width: 112px; height: 188px; }
-      .c-symbol { font-size: 2rem; }
-      .c-name-ja { font-size: .85rem; }
-      .cards-row { gap: 1rem; }
+    @media(max-width:520px){
+      .spread-grid{grid-template-columns:1fr}
+      .cards-row{gap:.8rem}
+      .flip-card{width:80px;height:130px}
+      .fan-card{width:58px;height:94px}
+      .fan-container{height:230px}
+      .reading-card-block{padding:1rem 1.1rem}
     }
   </style>
 </head>
@@ -452,312 +166,689 @@
 
 <div class="app">
   <header class="header">
-    <h1 class="main-title">✦ Mystic Tarot ✦</h1>
-    <p class="main-subtitle">神秘のタロット占い</p>
+    <h1 class="header-title">✦ 神秘のタロット ✦</h1>
+    <p class="header-sub">MYSTIC TAROT ORACLE</p>
   </header>
 
-  <!-- Phase 1: Input -->
-  <div class="phase" id="phaseInput">
-    <div class="crystal-orb"></div>
-    <p class="phase-label">何について占いたいですか？</p>
-    <textarea class="q-input" id="questionInput" rows="3"
-      placeholder="恋愛、仕事、人間関係... 心に浮かんだことを自由に入力してください"></textarea>
-    <button class="btn-primary" onclick="startReading()">✨ カードを引く ✨</button>
-  </div>
+  <!-- Phase: Question -->
+  <section class="phase" id="phase-question">
+    <div class="divider"></div>
+    <p class="question-label">✦ 占いたいことを入力してください ✦</p>
+    <div class="question-area">
+      <textarea class="question-input" id="question-input" placeholder="例：仕事の方向性について、恋愛について、今後の人生について…"></textarea>
+    </div>
+    <button class="btn btn-gold" id="btn-to-spread">スプレッドを選ぶ ›</button>
+    <div class="divider"></div>
+  </section>
 
-  <!-- Phase 2: Shuffle -->
-  <div class="phase hidden" id="phaseShuffle">
-    <p class="shuffle-msg">カードをシャッフルしています...</p>
-    <div class="loading-dots"><span></span><span></span><span></span></div>
-  </div>
+  <!-- Phase: Spread selection -->
+  <section class="phase hidden" id="phase-spread">
+    <p class="spread-title">✦ スプレッドを選択してください ✦</p>
+    <div class="spread-grid" id="spread-grid"></div>
+    <button class="btn btn-gold" id="btn-to-pick" disabled>カードを選ぶ ›</button>
+    <div class="divider"></div>
+  </section>
 
-  <!-- Phase 3: Cards face-down -->
-  <div class="phase hidden" id="phaseCards" style="max-width:860px;">
-    <p class="spread-label">〜 過去・現在・未来のスプレッド 〜</p>
-    <p class="q-display" id="qDisplay"></p>
-    <p class="reveal-hint">カードをタップして開いてください</p>
-    <div class="cards-row" id="cardsRow"></div>
-  </div>
+  <!-- Phase: Fan pick -->
+  <section class="phase hidden" id="phase-pick">
+    <p class="fan-title" id="fan-title">✦ カードに手を触れてください ✦</p>
+    <p class="pick-counter" id="pick-counter"></p>
+    <div class="fan-container" id="fan-container"></div>
+    <button class="btn btn-gold hidden" id="btn-confirm-pick">このカードで占う ›</button>
+    <div class="divider"></div>
+  </section>
 
-  <!-- Phase 4: Reading -->
-  <div class="phase hidden" id="phaseReading" style="max-width:720px;">
-    <h2 class="reading-title">〜 タロットからのメッセージ 〜</h2>
-    <p class="reading-q" id="readingQ"></p>
-    <div id="readingCards"></div>
-    <button class="btn-again" onclick="resetAll()">もう一度占う</button>
+  <!-- Phase: Reading -->
+  <section class="phase hidden" id="phase-reading">
+    <p class="reading-question" id="reading-question-display"></p>
+    <div class="cards-row" id="cards-row"></div>
+    <div class="reading-result hidden" id="reading-result"></div>
+    <div class="reset-area">
+      <button class="btn btn-outline hidden" id="btn-reset">もう一度占う</button>
+    </div>
+    <div class="divider"></div>
+  </section>
+</div>
+
+<!-- Shuffle overlay -->
+<div class="shuffle-overlay hidden" id="shuffle-overlay">
+  <div class="shuffle-cards">
+    <div class="shuffle-mini"></div>
+    <div class="shuffle-mini"></div>
+    <div class="shuffle-mini"></div>
+    <div class="shuffle-mini"></div>
+    <div class="shuffle-mini"></div>
   </div>
+  <p class="shuffle-text">カードをシャッフル中…</p>
 </div>
 
 <script>
-/* ─────────────────── TAROT DATA ─────────────────── */
+// ───────────────────────────────────────────────
+// STARFIELD
+// ───────────────────────────────────────────────
+(function(){
+  const canvas = document.getElementById('bg-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, stars = [], shoots = [];
+  function resize(){ W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+  function mkStar(){ return { x:Math.random()*W, y:Math.random()*H, r:Math.random()*1.4+.2, a:Math.random(), da:(Math.random()-.5)*.008 }; }
+  function init(){ resize(); stars=[]; for(let i=0;i<180;i++) stars.push(mkStar()); }
+  function mkShoot(){
+    const x=Math.random()*W*.7, y=Math.random()*H*.4;
+    return { x, y, vx:6+Math.random()*5, vy:3+Math.random()*3, life:1, decay:.018+Math.random()*.012 };
+  }
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    stars.forEach(s=>{
+      s.a += s.da;
+      if(s.a<0||s.a>1) s.da*=-1;
+      ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(255,255,240,${s.a*.7})`; ctx.fill();
+    });
+    if(Math.random()<.006) shoots.push(mkShoot());
+    shoots = shoots.filter(s=>s.life>0);
+    shoots.forEach(s=>{
+      const tail=60;
+      const grd=ctx.createLinearGradient(s.x,s.y,s.x-s.vx*tail/s.vx,s.y-s.vy*tail/s.vy);
+      grd.addColorStop(0,`rgba(212,168,67,${s.life*.9})`);
+      grd.addColorStop(1,'rgba(212,168,67,0)');
+      ctx.beginPath(); ctx.moveTo(s.x,s.y); ctx.lineTo(s.x-s.vx*8,s.y-s.vy*8);
+      ctx.strokeStyle=grd; ctx.lineWidth=1.5; ctx.stroke();
+      s.x+=s.vx; s.y+=s.vy; s.life-=s.decay;
+    });
+    requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize',()=>{ resize(); });
+  init(); draw();
+})();
+
+// ───────────────────────────────────────────────
+// CARD DATA — 78 cards
+// ───────────────────────────────────────────────
 const CARDS = [
-  { n:"0",   ja:"愚者",       en:"The Fool",         sym:"🌟",
-    up:{ kw:["新たな始まり","自由","冒険","無邪気"],       msg:"新しい旅の始まりを告げています。恐れずに一歩踏み出す時です。あなたの中にある純粋な好奇心と冒険心を信じましょう。未知の世界への跳躍が、最高の贈り物をもたらします。" },
-    rv:{ kw:["無謀","衝動的","準備不足","迷い"],           msg:"慎重さが求められる時期です。衝動的な行動は避け、しっかりと地に足をつけて準備を整えてから前進することをお勧めします。" }},
-  { n:"I",   ja:"魔術師",     en:"The Magician",     sym:"⚡",
-    up:{ kw:["意志力","創造性","スキル","集中"],            msg:"今あなたには目標を達成するための全ての力とツールが揃っています。強い意志を持って集中すれば、どんな夢も現実に変えられます。" },
-    rv:{ kw:["操作","欺き","力の乱用","焦り"],              msg:"自分の力を過信していないか振り返る時です。誠実な方法で、一歩一歩丁寧に目標へ向かうことが重要です。" }},
-  { n:"II",  ja:"女教皇",     en:"The High Priestess",sym:"🌙",
-    up:{ kw:["直感","神秘","内なる知恵","潜在意識"],        msg:"あなたの内なる声に耳を傾けてください。見えないものの中に大切な答えが隠されています。静かに心を落ち着け、直感を信じることが重要です。" },
-    rv:{ kw:["秘密","直感の無視","表面的","混乱"],          msg:"内なる声を無視していませんか？自分の感情や直感に正直になり、深いところにある真実と向き合う時期です。" }},
-  { n:"III", ja:"女帝",       en:"The Empress",       sym:"🌹",
-    up:{ kw:["豊かさ","母性","創造性","繁栄"],              msg:"あなたの人生に豊かさと繁栄が流れ込んでいます。創造性を発揮し、愛情を持って物事に取り組むことで、素晴らしい実りがもたらされるでしょう。" },
-    rv:{ kw:["依存","過保護","創造性の阻害","不安定"],      msg:"自立することが大切です。他者への依存を減らし、自分自身の力で前進する時期です。自分を養うことから始めましょう。" }},
-  { n:"IV",  ja:"皇帝",       en:"The Emperor",       sym:"👑",
-    up:{ kw:["権威","安定","リーダーシップ","構造"],        msg:"強いリーダーシップと安定した基盤があなたを支えています。計画を立て、規律を持って行動することで、望む結果を得られるでしょう。" },
-    rv:{ kw:["支配的","柔軟性の欠如","独裁","権力の乱用"],  msg:"頑固になりすぎていませんか？柔軟性を持ち、他者の意見にも耳を傾けることが、より良い結果をもたらします。" }},
-  { n:"V",   ja:"教皇",       en:"The Hierophant",   sym:"⛩️",
-    up:{ kw:["伝統","信仰","教育","道徳"],                  msg:"伝統や慣習の中に知恵があります。信頼できる人物からのアドバイスを参考にし、確立された道を歩むことが助けとなるでしょう。" },
-    rv:{ kw:["反抗","固定観念","束縛","非順応"],            msg:"既存の枠にとらわれず、自分だけの道を切り開く時かもしれません。慣習を疑い、新しい視点を持ちましょう。" }},
-  { n:"VI",  ja:"恋人たち",   en:"The Lovers",        sym:"💫",
-    up:{ kw:["愛","調和","選択","絆"],                      msg:"愛と調和が訪れています。重要な選択を迫られているかもしれませんが、心の声に従うことで正しい道が見えてきます。真の繋がりを大切に。" },
-    rv:{ kw:["不調和","決断の困難","価値観の相違","失恋"],  msg:"関係における不調和や、難しい選択に直面しているかもしれません。自分の価値観と向き合い、誠実な決断をしましょう。" }},
-  { n:"VII", ja:"戦車",       en:"The Chariot",       sym:"⚔️",
-    up:{ kw:["勝利","意志力","制御","突破"],                msg:"困難を乗り越え、勝利へと向かっています。強い意志と集中力があれば、どんな障害も突破できます。前進し続けてください。" },
-    rv:{ kw:["制御不能","攻撃性","障害","敗北"],            msg:"コントロールを失いそうになっていませんか？一歩引いて状況を見直し、自分の感情と行動を整えることが必要です。" }},
-  { n:"VIII",ja:"力",         en:"Strength",          sym:"🦁",
-    up:{ kw:["勇気","忍耐","内なる力","自制心"],            msg:"あなたには想像以上の内なる力があります。柔らかさの中にある強さを発揮する時です。愛情と忍耐を持って困難に向き合えば必ず乗り越えられます。" },
-    rv:{ kw:["自己不信","弱さ","恐れ","制御不能"],          msg:"自分を信じることを恐れていませんか？内なる強さを取り戻し、自己肯定感を高めることに集中しましょう。" }},
-  { n:"IX",  ja:"隠者",       en:"The Hermit",        sym:"🕯️",
-    up:{ kw:["内省","孤独","知恵","探求"],                  msg:"一人の時間を持ち、内省することが大切な時期です。外の世界から離れ、自分の内なる知恵に耳を傾けることで大切な洞察が得られるでしょう。" },
-    rv:{ kw:["孤立","引きこもり","拒絶","孤独感"],          msg:"孤立しすぎていませんか？適度に他者との繋がりを保ちながら、内省のバランスを取ることが必要です。" }},
-  { n:"X",   ja:"運命の輪",   en:"Wheel of Fortune",  sym:"☯️",
-    up:{ kw:["変化","運命","サイクル","幸運"],              msg:"運命の転換点にいます。変化を恐れずに受け入れてください。宇宙のサイクルがあなたに有利に働いており、幸運な変化が訪れる時です。" },
-    rv:{ kw:["不運","変化への抵抗","停滞","コントロール喪失"],msg:"変化に抵抗することで問題が生じています。流れに逆らわず、状況の自然な展開に身を委ねることが助けとなるでしょう。" }},
-  { n:"XI",  ja:"正義",       en:"Justice",           sym:"⚖️",
-    up:{ kw:["公平","真実","法","原因と結果"],              msg:"物事は公平に判断されます。真実と誠実さが重要な時期です。あなたの行動と選択が正当に評価され、公正な結果がもたらされるでしょう。" },
-    rv:{ kw:["不公平","不誠実","偏見","責任逃れ"],          msg:"不公平な状況や不誠実な行為に注意が必要です。責任を取り、誠実に向き合うことが長期的には良い結果をもたらします。" }},
-  { n:"XII", ja:"吊るされた男",en:"The Hanged Man",   sym:"🌀",
-    up:{ kw:["待機","犠牲","新しい視点","受容"],            msg:"今は行動より待つ時です。別の角度から状況を見ることで、新たな洞察が得られます。一時的な犠牲が長期的な利益をもたらすでしょう。" },
-    rv:{ kw:["停滞","抵抗","無駄な犠牲","利己主義"],        msg:"無駄な犠牲を払っていませんか？前進できない状況から抜け出すために、視点を変えることが必要かもしれません。" }},
-  { n:"XIII",ja:"死神",       en:"Death",             sym:"🌑",
-    up:{ kw:["変容","終わり","移行","再生"],                msg:"恐れないでください。これは重要な変容と新たな始まりを告げています。古いものを手放し、新しい可能性を受け入れる時です。廃墟の上に美しいものが生まれます。" },
-    rv:{ kw:["変化への抵抗","停滞","執着","腐敗"],          msg:"変化を恐れて古いパターンに執着していませんか？手放すことへの恐怖が成長を妨げています。" }},
-  { n:"XIV", ja:"節制",       en:"Temperance",        sym:"✨",
-    up:{ kw:["バランス","調和","忍耐","目的"],              msg:"バランスと調和が鍵となる時期です。急がず、焦らず、物事を穏やかに進めることで美しい結果が生まれます。中庸の道を歩むことが重要です。" },
-    rv:{ kw:["不均衡","過剰","不調和","焦り"],             msg:"バランスを崩していませんか？極端な行動は避け、もう少し穏やかで中庸なアプローチを取ることが助けとなります。" }},
-  { n:"XV",  ja:"悪魔",       en:"The Devil",         sym:"🔗",
-    up:{ kw:["束縛","誘惑","物質主義","依存"],              msg:"何かにとらわれていませんか？恐れや依存があなたの自由を制限しています。その鎖は実は自分でつけたもの。気づきが解放への第一歩です。" },
-    rv:{ kw:["解放","独立","制限からの自由","洞察"],        msg:"束縛から解放される時が来ています。長い間あなたを縛っていたものから自由になり、新たな可能性が開かれるでしょう。" }},
-  { n:"XVI", ja:"塔",         en:"The Tower",         sym:"🗼",
-    up:{ kw:["突然の変化","混乱","啓示","崩壊"],            msg:"突然の変化や崩壊が起きているかもしれません。しかし、これは不必要なものを取り除くための必要なプロセスです。廃墟の上に、より良いものを建てることができます。" },
-    rv:{ kw:["危機の回避","恐れ","変化への抵抗","遅い崩壊"],msg:"問題を先延ばしにしていませんか？避けられない変化に直面することで、長期的な解放が得られます。" }},
-  { n:"XVII",ja:"星",         en:"The Star",          sym:"⭐",
-    up:{ kw:["希望","インスピレーション","再生","平和"],    msg:"希望と癒しの光が差し込んでいます。困難な時期を経た後、ようやく平和と安らぎが訪れています。夢を追い続けてください、それは実現します。" },
-    rv:{ kw:["絶望","幻滅","希望の喪失","信念の欠如"],     msg:"希望を失いそうになっていますか？暗闇の中にも必ず光があります。自分を信じ、宇宙があなたを導いていることを信頼してください。" }},
-  { n:"XVIII",ja:"月",        en:"The Moon",          sym:"🌕",
-    up:{ kw:["幻想","恐れ","無意識","混乱"],               msg:"物事が不明確に見える時期です。幻想と現実を見分けることが重要です。恐れや不安があなたの判断を曇らせていないか確認してください。" },
-    rv:{ kw:["明晰さ","混乱の解消","恐れの克服","解放"],   msg:"混乱が晴れ、物事が明確になってきています。恐れや幻想から解放され、真実が見えるようになるでしょう。" }},
-  { n:"XIX", ja:"太陽",       en:"The Sun",           sym:"☀️",
-    up:{ kw:["喜び","成功","活力","輝き"],                  msg:"素晴らしい喜びと成功がやってきています！人生が明るく輝いています。自信を持って前進してください。最高の結果があなたを待っています。" },
-    rv:{ kw:["一時的な陰り","楽観主義の欠如","悲観","停滞"],msg:"一時的な曇りがあるかもしれませんが、太陽は常に輝いています。楽観的な視点を取り戻すことで、喜びが戻ってくるでしょう。" }},
-  { n:"XX",  ja:"審判",       en:"Judgement",         sym:"🎺",
-    up:{ kw:["覚醒","更生","内なる呼びかけ","赦し"],        msg:"人生の重要な転換期にいます。過去を手放し、より高い自己に目覚める時です。内なる呼びかけに応答し、真の自分として生きることが求められています。" },
-    rv:{ kw:["自己不信","過去への執着","後悔","恐れ"],     msg:"過去の失敗や後悔にとらわれていませんか？自分を赦し、前に進む勇気を持つことが変革の鍵です。" }},
-  { n:"XXI", ja:"世界",       en:"The World",         sym:"🌍",
-    up:{ kw:["完成","達成","統合","旅の終わり"],            msg:"おめでとうございます！一つのサイクルが美しく完結しています。あなたの努力が実を結び、完全な充足感と達成感を感じる時です。次の素晴らしい旅が始まろうとしています。" },
-    rv:{ kw:["未完成","停滞","遅延","近道"],               msg:"もう少しで目標に到達します。近道を探すより、しっかりとプロセスを完了させることが最終的な成功につながります。" }}
+  // ── MAJOR ARCANA ──
+  {n:'0',ja:'愚者',en:'The Fool',sym:'🌟',suit:'major',
+   up:{kw:['新たな始まり','自由','冒険','無邪気'],msg:'新しい旅の始まりを告げています。恐れずに一歩踏み出す時です。あなたの中にある純粋な好奇心と冒険心を信じましょう。'},
+   rv:{kw:['無謀','衝動的','準備不足','迷い'],msg:'慎重さが求められる時期です。衝動的な行動は避け、しっかりと準備を整えてから前進することをお勧めします。'}},
+  {n:'I',ja:'魔術師',en:'The Magician',sym:'⚡',suit:'major',
+   up:{kw:['意志力','創造性','スキル','集中'],msg:'今あなたには目標を達成するための全ての力とツールが揃っています。強い意志を持って集中すれば、どんな夢も現実に変えられます。'},
+   rv:{kw:['操作','欺き','力の乱用','焦り'],msg:'自分の力を過信していないか振り返る時です。誠実な方法で、一歩一歩丁寧に目標へ向かうことが重要です。'}},
+  {n:'II',ja:'女教皇',en:'The High Priestess',sym:'🌙',suit:'major',
+   up:{kw:['直感','神秘','内なる知恵','潜在意識'],msg:'あなたの内なる声に耳を傾けてください。見えないものの中に大切な答えが隠されています。静かに心を落ち着け、直感を信じることが重要です。'},
+   rv:{kw:['秘密','直感の無視','表面的','混乱'],msg:'内なる声を無視していませんか？自分の感情や直感に正直になり、深いところにある真実と向き合う時期です。'}},
+  {n:'III',ja:'女帝',en:'The Empress',sym:'🌸',suit:'major',
+   up:{kw:['豊かさ','母性','創造性','繁栄'],msg:'あなたの人生に豊かさと繁栄が流れ込んでいます。創造性を発揮し、愛情を持って物事に取り組むことで、素晴らしい実りがもたらされるでしょう。'},
+   rv:{kw:['依存','過保護','創造性の阻害','不安定'],msg:'自立することが大切です。他者への依存を減らし、自分自身の力で前進する時期です。'}},
+  {n:'IV',ja:'皇帝',en:'The Emperor',sym:'👑',suit:'major',
+   up:{kw:['権威','安定','リーダーシップ','構造'],msg:'強いリーダーシップと安定した基盤があなたを支えています。計画を立て、規律を持って行動することで、望む結果を得られるでしょう。'},
+   rv:{kw:['支配的','柔軟性の欠如','独裁','権力の乱用'],msg:'頑固になりすぎていませんか？柔軟性を持ち、他者の意見にも耳を傾けることが、より良い結果をもたらします。'}},
+  {n:'V',ja:'教皇',en:'The Hierophant',sym:'✝',suit:'major',
+   up:{kw:['伝統','信仰','教育','道徳'],msg:'伝統や慣習の中に知恵があります。信頼できる人物からのアドバイスを参考にし、確立された道を歩むことが助けとなるでしょう。'},
+   rv:{kw:['反抗','固定観念','束縛','非順応'],msg:'既存の枠にとらわれず、自分だけの道を切り開く時かもしれません。慣習を疑い、新しい視点を持ちましょう。'}},
+  {n:'VI',ja:'恋人たち',en:'The Lovers',sym:'💞',suit:'major',
+   up:{kw:['愛','調和','選択','絆'],msg:'愛と調和が訪れています。重要な選択を迫られているかもしれませんが、心の声に従うことで正しい道が見えてきます。'},
+   rv:{kw:['不調和','決断の困難','価値観の相違','失恋'],msg:'関係における不調和や、難しい選択に直面しているかもしれません。自分の価値観と向き合い、誠実な決断をしましょう。'}},
+  {n:'VII',ja:'戦車',en:'The Chariot',sym:'🏆',suit:'major',
+   up:{kw:['勝利','意志力','制御','突破'],msg:'困難を乗り越え、勝利へと向かっています。強い意志と集中力があれば、どんな障害も突破できます。'},
+   rv:{kw:['制御不能','攻撃性','障害','敗北'],msg:'コントロールを失いそうになっていませんか？一歩引いて状況を見直し、自分の感情と行動を整えることが必要です。'}},
+  {n:'VIII',ja:'力',en:'Strength',sym:'🦁',suit:'major',
+   up:{kw:['勇気','忍耐','内なる力','自制心'],msg:'あなたには想像以上の内なる力があります。愛情と忍耐を持って困難に向き合えば必ず乗り越えられます。'},
+   rv:{kw:['自己不信','弱さ','恐れ','制御不能'],msg:'自分を信じることを恐れていませんか？内なる強さを取り戻し、自己肯定感を高めることに集中しましょう。'}},
+  {n:'IX',ja:'隠者',en:'The Hermit',sym:'🕯',suit:'major',
+   up:{kw:['内省','孤独','知恵','探求'],msg:'一人の時間を持ち、内省することが大切な時期です。自分の内なる知恵に耳を傾けることで大切な洞察が得られるでしょう。'},
+   rv:{kw:['孤立','引きこもり','拒絶','孤独感'],msg:'孤立しすぎていませんか？適度に他者との繋がりを保ちながら、内省のバランスを取ることが必要です。'}},
+  {n:'X',ja:'運命の輪',en:'Wheel of Fortune',sym:'☸',suit:'major',
+   up:{kw:['変化','運命','サイクル','幸運'],msg:'運命の転換点にいます。変化を恐れずに受け入れてください。宇宙のサイクルがあなたに有利に働いており、幸運な変化が訪れる時です。'},
+   rv:{kw:['不運','変化への抵抗','停滞','コントロール喪失'],msg:'変化に抵抗することで問題が生じています。流れに逆らわず、状況の自然な展開に身を委ねることが助けとなるでしょう。'}},
+  {n:'XI',ja:'正義',en:'Justice',sym:'⚖',suit:'major',
+   up:{kw:['公平','真実','法','原因と結果'],msg:'物事は公平に判断されます。あなたの行動と選択が正当に評価され、公正な結果がもたらされるでしょう。'},
+   rv:{kw:['不公平','不誠実','偏見','責任逃れ'],msg:'不公平な状況や不誠実な行為に注意が必要です。誠実に向き合うことが長期的には良い結果をもたらします。'}},
+  {n:'XII',ja:'吊るされた男',en:'The Hanged Man',sym:'🔮',suit:'major',
+   up:{kw:['待機','犠牲','新しい視点','受容'],msg:'今は行動より待つ時です。別の角度から状況を見ることで、新たな洞察が得られます。'},
+   rv:{kw:['停滞','抵抗','無駄な犠牲','利己主義'],msg:'無駄な犠牲を払っていませんか？前進できない状況から抜け出すために、視点を変えることが必要かもしれません。'}},
+  {n:'XIII',ja:'死神',en:'Death',sym:'🌑',suit:'major',
+   up:{kw:['変容','終わり','移行','再生'],msg:'恐れないでください。これは重要な変容と新たな始まりを告げています。古いものを手放し、新しい可能性を受け入れる時です。'},
+   rv:{kw:['変化への抵抗','停滞','執着','腐敗'],msg:'変化を恐れて古いパターンに執着していませんか？手放すことへの恐怖が成長を妨げています。'}},
+  {n:'XIV',ja:'節制',en:'Temperance',sym:'🌊',suit:'major',
+   up:{kw:['バランス','調和','忍耐','目的'],msg:'バランスと調和が鍵となる時期です。急がず、焦らず、物事を穏やかに進めることで美しい結果が生まれます。'},
+   rv:{kw:['不均衡','過剰','不調和','焦り'],msg:'バランスを崩していませんか？極端な行動は避け、穏やかで中庸なアプローチを取ることが助けとなります。'}},
+  {n:'XV',ja:'悪魔',en:'The Devil',sym:'🔗',suit:'major',
+   up:{kw:['束縛','誘惑','物質主義','依存'],msg:'何かにとらわれていませんか？恐れや依存があなたの自由を制限しています。気づきが解放への第一歩です。'},
+   rv:{kw:['解放','独立','制限からの自由','洞察'],msg:'束縛から解放される時が来ています。長い間あなたを縛っていたものから自由になり、新たな可能性が開かれるでしょう。'}},
+  {n:'XVI',ja:'塔',en:'The Tower',sym:'⚡',suit:'major',
+   up:{kw:['突然の変化','混乱','啓示','崩壊'],msg:'突然の変化や崩壊が起きているかもしれません。これは不必要なものを取り除くための必要なプロセスです。廃墟の上に、より良いものを建てることができます。'},
+   rv:{kw:['危機の回避','恐れ','変化への抵抗','遅い崩壊'],msg:'問題を先延ばしにしていませんか？避けられない変化に直面することで、長期的な解放が得られます。'}},
+  {n:'XVII',ja:'星',en:'The Star',sym:'⭐',suit:'major',
+   up:{kw:['希望','インスピレーション','再生','平和'],msg:'希望と癒しの光が差し込んでいます。夢を追い続けてください、それは実現します。'},
+   rv:{kw:['絶望','幻滅','希望の喪失','信念の欠如'],msg:'希望を失いそうになっていますか？暗闇の中にも必ず光があります。自分を信じ続けてください。'}},
+  {n:'XVIII',ja:'月',en:'The Moon',sym:'🌕',suit:'major',
+   up:{kw:['幻想','恐れ','無意識','混乱'],msg:'物事が不明確に見える時期です。幻想と現実を見分けることが重要です。恐れや不安があなたの判断を曇らせていないか確認してください。'},
+   rv:{kw:['明晰さ','混乱の解消','恐れの克服','解放'],msg:'混乱が晴れ、物事が明確になってきています。恐れや幻想から解放され、真実が見えるようになるでしょう。'}},
+  {n:'XIX',ja:'太陽',en:'The Sun',sym:'☀',suit:'major',
+   up:{kw:['喜び','成功','活力','輝き'],msg:'素晴らしい喜びと成功がやってきています！自信を持って前進してください。最高の結果があなたを待っています。'},
+   rv:{kw:['一時的な陰り','楽観主義の欠如','悲観','停滞'],msg:'一時的な曇りがあるかもしれませんが、太陽は常に輝いています。楽観的な視点を取り戻すことで、喜びが戻ってくるでしょう。'}},
+  {n:'XX',ja:'審判',en:'Judgement',sym:'🎺',suit:'major',
+   up:{kw:['覚醒','更生','内なる呼びかけ','赦し'],msg:'人生の重要な転換期にいます。過去を手放し、より高い自己に目覚める時です。内なる呼びかけに応答し、真の自分として生きましょう。'},
+   rv:{kw:['自己不信','過去への執着','後悔','恐れ'],msg:'過去の失敗や後悔にとらわれていませんか？自分を赦し、前に進む勇気を持つことが変革の鍵です。'}},
+  {n:'XXI',ja:'世界',en:'The World',sym:'🌍',suit:'major',
+   up:{kw:['完成','達成','統合','旅の終わり'],msg:'おめでとうございます！一つのサイクルが美しく完結しています。あなたの努力が実を結び、完全な達成感を感じる時です。次の素晴らしい旅が始まろうとしています。'},
+   rv:{kw:['未完成','停滞','遅延','近道'],msg:'もう少しで目標に到達します。近道を探すより、しっかりとプロセスを完了させることが最終的な成功につながります。'}},
+
+  // ── WANDS ──
+  {n:'Ace',ja:'ワンドのエース',en:'Ace of Wands',sym:'🔥',suit:'wands',
+   up:{kw:['始まり','情熱','創造','インスピレーション'],msg:'情熱の火花が生まれています。新しいプロジェクトや冒険を始める絶好のタイミングです。'},
+   rv:{kw:['遅延','エネルギー不足','阻害','躊躇'],msg:'情熱が空回りしているかもしれません。始める前に方向性を定めることが大切です。'}},
+  {n:'2',ja:'ワンドの2',en:'Two of Wands',sym:'🔥',suit:'wands',
+   up:{kw:['計画','先見の明','可能性','決断'],msg:'目の前に広がる可能性を見据え、大きなビジョンを描く時です。勇気を持って次のステップへ踏み出しましょう。'},
+   rv:{kw:['恐れ','優柔不断','現状維持','機会損失'],msg:'変化を恐れて立ち止まっていませんか？計画を実行に移す勇気が必要な時期です。'}},
+  {n:'3',ja:'ワンドの3',en:'Three of Wands',sym:'🔥',suit:'wands',
+   up:{kw:['拡大','旅立ち','遠方','成長'],msg:'努力が実を結び始め、視野が広がっています。遠くへ目を向け、さらなる可能性を探求する時です。'},
+   rv:{kw:['遅延','失望','計画の狂い','帰還'],msg:'期待していた結果が遅れているかもしれません。焦らず計画を見直しましょう。'}},
+  {n:'4',ja:'ワンドの4',en:'Four of Wands',sym:'🔥',suit:'wands',
+   up:{kw:['祝福','達成感','安定','祝い'],msg:'努力の成果を祝う時が来ています。人々と喜びを分かち合い、この安定した基盤を楽しんでください。'},
+   rv:{kw:['不安定','関係の緊張','達成感の欠如','完成の遅れ'],msg:'もうすぐ目標に到達します。最後まで諦めずに努力を続けましょう。'}},
+  {n:'5',ja:'ワンドの5',en:'Five of Wands',sym:'🔥',suit:'wands',
+   up:{kw:['競争','対立','試練','エネルギー'],msg:'様々な意見や競争が入り乱れています。混乱の中から、自分の立場を明確にすることが重要です。'},
+   rv:{kw:['内部の葛藤','回避','妥協','解決'],msg:'対立を避けるのではなく、正直に向き合うことで解決の糸口が見えてきます。'}},
+  {n:'6',ja:'ワンドの6',en:'Six of Wands',sym:'🔥',suit:'wands',
+   up:{kw:['勝利','認知','自信','リーダーシップ'],msg:'努力が認められ、勝利の時が訪れています。自信を持って前に進み、周囲の称賛を受け取りましょう。'},
+   rv:{kw:['自己不信','過度の自負','失敗','批判'],msg:'勝利にこだわりすぎていませんか？謙虚さを忘れずに成果を積み重ねましょう。'}},
+  {n:'7',ja:'ワンドの7',en:'Seven of Wands',sym:'🔥',suit:'wands',
+   up:{kw:['挑戦','防衛','粘り強さ','立場'],msg:'困難な状況でも、自分の立場と信念を守り抜く強さがあります。諦めずに立ち向かってください。'},
+   rv:{kw:['敗北感','諦め','圧倒される','防衛放棄'],msg:'疲れて諦めそうになっていませんか？支援を求め、戦略を見直す時かもしれません。'}},
+  {n:'8',ja:'ワンドの8',en:'Eight of Wands',sym:'🔥',suit:'wands',
+   up:{kw:['加速','コミュニケーション','動き','変化'],msg:'物事が急速に動き始めています。流れに乗り、素早く行動することで良い結果が生まれるでしょう。'},
+   rv:{kw:['遅延','誤解','焦り','障害'],msg:'情報の混乱や遅延が生じているかもしれません。急ぎすぎず、確認を怠らないようにしましょう。'}},
+  {n:'9',ja:'ワンドの9',en:'Nine of Wands',sym:'🔥',suit:'wands',
+   up:{kw:['回復力','忍耐','最後の抵抗','警戒'],msg:'長い戦いでも、あなたにはまだ続ける力があります。最後まで粘り強く立ち向かいましょう。'},
+   rv:{kw:['疲弊','頑固','諦め','傷つきやすさ'],msg:'過去の傷が前進を妨げていませんか？保護しすぎずに、信頼を築くことが大切です。'}},
+  {n:'10',ja:'ワンドの10',en:'Ten of Wands',sym:'🔥',suit:'wands',
+   up:{kw:['重荷','責任','過負荷','忍耐'],msg:'多くの責任を抱えて疲れているかもしれません。荷を降ろし、優先順位を見直す時です。'},
+   rv:{kw:['解放','委任','軽くなる','負担軽減'],msg:'一人で全てを抱え込む必要はありません。他者に任せることで、より遠くへ進めます。'}},
+  {n:'Page',ja:'ワンドのペイジ',en:'Page of Wands',sym:'🔥',suit:'wands',
+   up:{kw:['熱意','探求心','冒険','メッセージ'],msg:'新しいアイデアや情熱が溢れています。恐れずに探求し、自由に表現してください。'},
+   rv:{kw:['エネルギー不足','衝動的','準備不足','遅れ'],msg:'熱意だけでなく、計画と準備が成功の鍵です。焦らず着実に進みましょう。'}},
+  {n:'Knight',ja:'ワンドのナイト',en:'Knight of Wands',sym:'🔥',suit:'wands',
+   up:{kw:['行動力','大胆さ','冒険','情熱的'],msg:'情熱的なエネルギーで目標に向かって突き進む時です。大胆に行動し、機会をつかみましょう。'},
+   rv:{kw:['無謀','短気','衝動','散漫'],msg:'エネルギーが空回りしていませんか？方向性を定め、集中して行動することが大切です。'}},
+  {n:'Queen',ja:'ワンドのクイーン',en:'Queen of Wands',sym:'🔥',suit:'wands',
+   up:{kw:['情熱的','自信','魅力','リーダーシップ'],msg:'あなたのカリスマ性と情熱が周囲を引き付けています。自信を持ってリードしてください。'},
+   rv:{kw:['嫉妬','自己中心的','不安定','要求が高い'],msg:'周囲への要求が高すぎていませんか？自分自身と他者に対してより寛大になりましょう。'}},
+  {n:'King',ja:'ワンドのキング',en:'King of Wands',sym:'🔥',suit:'wands',
+   up:{kw:['ビジョン','起業家精神','カリスマ','達成'],msg:'力強いビジョンと行動力で目標を達成する力があります。あなたのリーダーシップが状況を変えるでしょう。'},
+   rv:{kw:['横暴','傲慢','支配的','無謀'],msg:'権威を振りかざしていませんか？他者の意見にも耳を傾け、チームの力を活かしましょう。'}},
+
+  // ── CUPS ──
+  {n:'Ace',ja:'カップのエース',en:'Ace of Cups',sym:'💧',suit:'cups',
+   up:{kw:['新しい愛','感情の始まり','直感','豊かさ'],msg:'新しい愛や感情の始まりを告げています。心を開いて、この豊かな感情の流れを受け取りましょう。'},
+   rv:{kw:['感情的なブロック','失恋','内向き','自己愛の欠如'],msg:'感情を抑圧していませんか？心の扉を開き、自分の気持ちと向き合う時です。'}},
+  {n:'2',ja:'カップの2',en:'Two of Cups',sym:'💧',suit:'cups',
+   up:{kw:['パートナーシップ','相互引力','調和','新しい関係'],msg:'強い相互引力と調和が生まれています。新しいパートナーシップや深まる関係が期待できます。'},
+   rv:{kw:['不調和','誤解','分離','コミュニケーション不足'],msg:'関係に亀裂が生じていませんか？誠実な対話で誤解を解くことが大切です。'}},
+  {n:'3',ja:'カップの3',en:'Three of Cups',sym:'💧',suit:'cups',
+   up:{kw:['お祝い','友情','コミュニティ','喜び'],msg:'友人や仲間と喜びを分かち合う素晴らしい時です。人との繋がりを大切にしてください。'},
+   rv:{kw:['孤立','過剰な快楽','依存','不和'],msg:'人間関係でのトラブルや過度の享楽に注意が必要です。バランスを保ちましょう。'}},
+  {n:'4',ja:'カップの4',en:'Four of Cups',sym:'💧',suit:'cups',
+   up:{kw:['瞑想','内省','不満','機会'],msg:'現状に満足できず、内省している時期です。差し出された機会に目を向けることで、新しい扉が開きます。'},
+   rv:{kw:['新しい視点','行動','前進','覚醒'],msg:'長い内省の時期が終わり、行動する準備が整ってきています。新しい機会に踏み出しましょう。'}},
+  {n:'5',ja:'カップの5',en:'Five of Cups',sym:'💧',suit:'cups',
+   up:{kw:['後悔','悲しみ','失望','喪失'],msg:'失ったものへの悲しみがあります。しかし、まだ残っているものに目を向けることで、前進できます。'},
+   rv:{kw:['受容','前進','赦し','回復'],msg:'悲しみを受け入れ、少しずつ前に進める準備ができています。過去から学び、新しい一歩を踏み出しましょう。'}},
+  {n:'6',ja:'カップの6',en:'Six of Cups',sym:'💧',suit:'cups',
+   up:{kw:['懐かしさ','純粋さ','思い出','再会'],msg:'過去の美しい思い出や再会が心を温めています。純粋な喜びを思い出し、それを現在に活かしましょう。'},
+   rv:{kw:['過去への執着','未熟','ノスタルジア','前進できない'],msg:'過去に生きすぎていませんか？美しい思い出は宝物ですが、今この瞬間にも価値があります。'}},
+  {n:'7',ja:'カップの7',en:'Seven of Cups',sym:'💧',suit:'cups',
+   up:{kw:['幻想','夢想','選択肢','混乱'],msg:'多くの可能性や夢が目の前に広がっています。しかし幻想と現実を見極め、本当に大切なものを選ぶことが重要です。'},
+   rv:{kw:['明晰さ','選択','現実的','決断'],msg:'幻想から目覚め、現実的な選択をする時が来ています。本当に望むものに集中しましょう。'}},
+  {n:'8',ja:'カップの8',en:'Eight of Cups',sym:'💧',suit:'cups',
+   up:{kw:['離れる','探求','諦め','より深いものへ'],msg:'今の状況から離れ、より深い意味を求める旅に出る時かもしれません。必要なものを手放す勇気を持ちましょう。'},
+   rv:{kw:['停滞','恐れ','逃避','引き返す'],msg:'大切なものから逃げていませんか？困難から逃げるより、向き合うことで成長できます。'}},
+  {n:'9',ja:'カップの9',en:'Nine of Cups',sym:'💧',suit:'cups',
+   up:{kw:['願望成就','満足','幸福','感謝'],msg:'願いが叶う吉兆です。満足と喜びに満ちた時期で、努力の成果を楽しむことができます。'},
+   rv:{kw:['不満','過剰','傲慢','浅はかな願い'],msg:'物質的な満足だけでは本当の幸福は得られません。内面の豊かさを大切にしましょう。'}},
+  {n:'10',ja:'カップの10',en:'Ten of Cups',sym:'💧',suit:'cups',
+   up:{kw:['幸福','家族の調和','完成','愛'],msg:'深い幸福と調和に満ちた時です。愛する人々と喜びを分かち合い、この恵みに感謝しましょう。'},
+   rv:{kw:['家族の不和','夢と現実のギャップ','不完全な幸福','対立'],msg:'表面的な幸福の裏に亀裂がありませんか？真の調和のために、誠実な対話が必要です。'}},
+  {n:'Page',ja:'カップのペイジ',en:'Page of Cups',sym:'💧',suit:'cups',
+   up:{kw:['直感的','感受性','夢見がち','メッセージ'],msg:'感受性豊かな直感がメッセージをもたらしています。夢や直感に耳を傾け、創造性を発揮してください。'},
+   rv:{kw:['感情的','不安定','非現実的','ガラスのハート'],msg:'感情に流されすぎていませんか？感受性は大切ですが、現実とのバランスも必要です。'}},
+  {n:'Knight',ja:'カップのナイト',en:'Knight of Cups',sym:'💧',suit:'cups',
+   up:{kw:['ロマンチック','理想主義','魅力','提案'],msg:'ロマンスや理想を追い求める甘いエネルギーがあります。感情を素直に表現し、大切な人に想いを伝えましょう。'},
+   rv:{kw:['幻滅','気まぐれ','非現実的','感情的操作'],msg:'理想と現実のギャップに悩んでいませんか？地に足をつけた愛情を育てることが大切です。'}},
+  {n:'Queen',ja:'カップのクイーン',en:'Queen of Cups',sym:'💧',suit:'cups',
+   up:{kw:['共感力','感情的な成熟','思いやり','直感'],msg:'深い共感力と思いやりで周囲の人々を包んでいます。直感と感情的な知性があなたを導くでしょう。'},
+   rv:{kw:['感情的依存','気まぐれ','不安定','マニピュレーション'],msg:'感情に振り回されすぎていませんか？自分の感情的なニーズを認識し、自立することが大切です。'}},
+  {n:'King',ja:'カップのキング',en:'King of Cups',sym:'💧',suit:'cups',
+   up:{kw:['感情的なバランス','知恵','外交','安定'],msg:'感情的な成熟と知恵で状況をバランスよくコントロールしています。思いやりのあるリーダーシップを発揮しましょう。'},
+   rv:{kw:['感情的操作','不安定','感情的な暴力','回避'],msg:'感情を抑圧したり操作したりしていませんか？真の感情的な強さは、自分の感情を認めることから生まれます。'}},
+
+  // ── SWORDS ──
+  {n:'Ace',ja:'ソードのエース',en:'Ace of Swords',sym:'⚔',suit:'swords',
+   up:{kw:['真実','明晰さ','新しい考え','突破'],msg:'鋭い知性と明晰さで真実を見抜く時です。曖昧さを断ち切り、明確な決断を下しましょう。'},
+   rv:{kw:['混乱','破壊的な力','偽り','残酷さ'],msg:'知識や言葉を破壊的に使っていませんか？真実を語る際には思いやりも忘れずに。'}},
+  {n:'2',ja:'ソードの2',en:'Two of Swords',sym:'⚔',suit:'swords',
+   up:{kw:['膠着状態','回避','均衡','決断の難しさ'],msg:'難しい選択の前で立ち止まっています。必要な情報を集め、最終的には決断を下す勇気を持ちましょう。'},
+   rv:{kw:['決断','情報過多','混乱','決断力'],msg:'ようやく決断する準備ができてきています。完璧な答えを待たず、最善の選択をする時です。'}},
+  {n:'3',ja:'ソードの3',en:'Three of Swords',sym:'⚔',suit:'swords',
+   up:{kw:['悲痛','別れ','心の傷','失望'],msg:'心の痛みや悲しみを経験しています。この痛みも成長のための一部と受け入れ、癒しの時間を大切にしましょう。'},
+   rv:{kw:['回復','許し','手放す','傷が癒える'],msg:'心の傷が少しずつ癒えてきています。過去の痛みを赦し、新しい一歩を踏み出す準備をしましょう。'}},
+  {n:'4',ja:'ソードの4',en:'Four of Swords',sym:'⚔',suit:'swords',
+   up:{kw:['休息','回復','瞑想','静寂'],msg:'活動的な時期の後、心身を休める必要があります。静かな時間を持ち、エネルギーを回復させましょう。'},
+   rv:{kw:['回復','再活動','焦り','精神的疲弊'],msg:'十分に休息が取れていないかもしれません。もう少し時間をかけて完全に回復してから行動しましょう。'}},
+  {n:'5',ja:'ソードの5',en:'Five of Swords',sym:'⚔',suit:'swords',
+   up:{kw:['葛藤','損失','勝利の代償','名誉'],msg:'勝利したとしても、その代償は大きいかもしれません。本当に戦う価値のある戦いなのか考えてみてください。'},
+   rv:{kw:['和解','後悔','前進','過去の清算'],msg:'過去の葛藤を手放し、和解の道を探す時です。プライドを捨てることで、より良い関係が築けます。'}},
+  {n:'6',ja:'ソードの6',en:'Six of Swords',sym:'⚔',suit:'swords',
+   up:{kw:['移行','旅立ち','困難からの脱出','回復'],msg:'困難な状況から少しずつ抜け出しています。前には穏やかな水が待っています。この移行の時期を大切に。'},
+   rv:{kw:['停滞','抵抗','逃避の失敗','過去への執着'],msg:'変化を恐れて動けなくなっていませんか？困難な状況から抜け出す勇気が必要な時期です。'}},
+  {n:'7',ja:'ソードの7',en:'Seven of Swords',sym:'⚔',suit:'swords',
+   up:{kw:['欺き','策略','孤立した行動','機知'],msg:'単独で秘密裏に行動しようとしているかもしれません。しかし、誠実さを犠牲にすることのリスクを考えてください。'},
+   rv:{kw:['暴露','誠実さ','悔悟','誤った計画'],msg:'隠してきたことが明るみに出るかもしれません。正直に向き合うことで、長期的な信頼を築けます。'}},
+  {n:'8',ja:'ソードの8',en:'Eight of Swords',sym:'⚔',suit:'swords',
+   up:{kw:['制限','束縛','否定的な思考','被害者意識'],msg:'自分で自分を縛っている可能性があります。制限は外部にあるのではなく、思考の中にあるかもしれません。'},
+   rv:{kw:['解放','新しい視点','自由','自己認識'],msg:'縛っていた思い込みから解放されつつあります。新しい視点で状況を見ることで、自由への道が開けます。'}},
+  {n:'9',ja:'ソードの9',en:'Nine of Swords',sym:'⚔',suit:'swords',
+   up:{kw:['不安','恐怖','悪夢','思い悩む'],msg:'夜中に不安で目が覚めることはありませんか？心配事の多くは実際には起こりません。信頼できる人に話しましょう。'},
+   rv:{kw:['希望','回復','受容','トンネルの出口'],msg:'最悪の状況は過ぎ去りつつあります。不安は薄れ、前向きな力が戻ってきているでしょう。'}},
+  {n:'10',ja:'ソードの10',en:'Ten of Swords',sym:'⚔',suit:'swords',
+   up:{kw:['終末','変容','痛みの終わり','新しい夜明け'],msg:'一つのサイクルが完全に終わりました。この苦しい終わりの後には、必ず新しい夜明けが訪れます。'},
+   rv:{kw:['回復','再起','抵抗','不可避への抵抗'],msg:'避けられない終わりを受け入れることで、新しい始まりへの道が開けます。'}},
+  {n:'Page',ja:'ソードのペイジ',en:'Page of Swords',sym:'⚔',suit:'swords',
+   up:{kw:['鋭い知性','好奇心','コミュニケーション','観察'],msg:'鋭い観察力と好奇心で新しいことを学ぼうとしています。知識を積み重ね、真実を探求してください。'},
+   rv:{kw:['噂','言葉の乱用','皮肉','準備不足'],msg:'言葉の力を慎重に使いましょう。知識をひけらかすより、相手を理解することが大切です。'}},
+  {n:'Knight',ja:'ソードのナイト',en:'Knight of Swords',sym:'⚔',suit:'swords',
+   up:{kw:['野心的','素早い行動','論理的','決断力'],msg:'目標に向かって素早く突き進む時です。論理的な思考と行動力で障害を乗り越えましょう。'},
+   rv:{kw:['無謀','横柄','論争好き','方向性の欠如'],msg:'スピードより方向性が大切です。突き進む前に、目的地を確認しましょう。'}},
+  {n:'Queen',ja:'ソードのクイーン',en:'Queen of Swords',sym:'⚔',suit:'swords',
+   up:{kw:['独立心','明晰な判断力','正直さ','知恵'],msg:'鋭い知性と明晰な判断力であらゆる状況を見通しています。正直で独立した視点があなたの強みです。'},
+   rv:{kw:['冷淡','苦い経験','孤立','批判的'],msg:'過去の経験から心を閉ざしていませんか？知性の鋭さに温かみを加えることで、より良い関係が築けます。'}},
+  {n:'King',ja:'ソードのキング',en:'King of Swords',sym:'⚔',suit:'swords',
+   up:{kw:['知的権威','公正','倫理','論理'],msg:'公正で論理的な判断力があなたをリードしています。倫理を重んじ、明晰な思考で正しい決断を下しましょう。'},
+   rv:{kw:['冷酷','横暴','偏見','不公正'],msg:'客観性を失っていませんか？感情も取り入れた、よりバランスの取れた判断が求められています。'}},
+
+  // ── PENTACLES ──
+  {n:'Ace',ja:'ペンタクルのエース',en:'Ace of Pentacles',sym:'🌿',suit:'pentacles',
+   up:{kw:['物質的な始まり','豊かさの種','新しいチャンス','基盤'],msg:'物質的な豊かさや新しいビジネスチャンスが訪れています。この機会をしっかりと掴み、堅実な基盤を築きましょう。'},
+   rv:{kw:['機会損失','物質主義','計画の欠如','不安定'],msg:'目の前の機会を見逃していませんか？地に足をつけた計画を立て、堅実に進みましょう。'}},
+  {n:'2',ja:'ペンタクルの2',en:'Two of Pentacles',sym:'🌿',suit:'pentacles',
+   up:{kw:['バランス','変化への適応','マルチタスク','軽やかさ'],msg:'複数のことを同時にこなしながら、バランスを保っています。変化を楽しみながら、柔軟に対応しましょう。'},
+   rv:{kw:['不均衡','散漫','財政的困難','過負荷'],msg:'多くのことを抱えすぎて、バランスが崩れていませんか？優先順位を決め、一つずつ丁寧に対処しましょう。'}},
+  {n:'3',ja:'ペンタクルの3',en:'Three of Pentacles',sym:'🌿',suit:'pentacles',
+   up:{kw:['チームワーク','技術','協力','スキル'],msg:'仲間との協力でより大きな成果が生まれます。それぞれの専門スキルを活かし、共に目標に向かいましょう。'},
+   rv:{kw:['不和','不備','質の低さ','孤立'],msg:'チームの調和が乱れていませんか？互いを尊重し、コミュニケーションを大切にすることで成果が上がります。'}},
+  {n:'4',ja:'ペンタクルの4',en:'Four of Pentacles',sym:'🌿',suit:'pentacles',
+   up:{kw:['所有','安定','節約','保護'],msg:'財産や安定を守ろうとしています。しかし、執着しすぎると成長の機会を失うかもしれません。'},
+   rv:{kw:['手放す','寛大さ','執着からの解放','浪費'],msg:'物や財産への執着を手放すことで、新しい豊かさが流れ込んでくるでしょう。'}},
+  {n:'5',ja:'ペンタクルの5',en:'Five of Pentacles',sym:'🌿',suit:'pentacles',
+   up:{kw:['経済的困難','孤立','試練','喪失'],msg:'経済的または精神的な困難の時期です。しかし助けは近くにあります。支援を求める勇気を持ちましょう。'},
+   rv:{kw:['回復','支援','困難の終わり','希望'],msg:'困難な時期が終わりに近づいています。周囲のサポートを受け入れ、少しずつ立ち直っていきましょう。'}},
+  {n:'6',ja:'ペンタクルの6',en:'Six of Pentacles',sym:'🌿',suit:'pentacles',
+   up:{kw:['寛大さ','与える/受け取る','バランス','慈善'],msg:'与えることと受け取ることのバランスが大切です。寛大な心で分かち合うことで、豊かさが循環します。'},
+   rv:{kw:['不均衡','負債','一方的な関係','不公平'],msg:'与えることや受け取ることに不公平さはありませんか？対等な関係を築くことが大切です。'}},
+  {n:'7',ja:'ペンタクルの7',en:'Seven of Pentacles',sym:'🌿',suit:'pentacles',
+   up:{kw:['忍耐','長期投資','評価','成長'],msg:'じっくりと時間をかけて育ててきたものが実り始めています。焦らず、着実に続けることが成功の鍵です。'},
+   rv:{kw:['焦り','短期的思考','成果への不満','無駄な努力'],msg:'すぐに結果を求めすぎていませんか？長期的な視点を持ち、プロセスを信頼することが大切です。'}},
+  {n:'8',ja:'ペンタクルの8',en:'Eight of Pentacles',sym:'🌿',suit:'pentacles',
+   up:{kw:['職人技','スキルアップ','勤勉さ','専念'],msg:'技術を磨き、真摯に仕事に向き合う時です。地道な努力と継続が、真の達人への道を開きます。'},
+   rv:{kw:['手抜き','完璧主義','単調さ','技術不足'],msg:'今の仕事に心から打ち込めていますか？情熱を取り戻し、もう一度技術の向上に集中しましょう。'}},
+  {n:'9',ja:'ペンタクルの9',en:'Nine of Pentacles',sym:'🌿',suit:'pentacles',
+   up:{kw:['豊かさ','独立心','物質的成功','洗練'],msg:'努力の結果、物質的な豊かさと自立を達成しています。この成果を楽しみ、自分を労ってください。'},
+   rv:{kw:['財政的な依存','表面的な豊かさ','孤独','過労'],msg:'物質的な成功の裏に孤独や不満はありませんか？真の豊かさとは何かを見つめ直す時かもしれません。'}},
+  {n:'10',ja:'ペンタクルの10',en:'Ten of Pentacles',sym:'🌿',suit:'pentacles',
+   up:{kw:['財産','遺産','家族の豊かさ','長期的安定'],msg:'家族や集団として長期的な豊かさと安定を築いています。この遺産を大切に守り、次世代に伝えましょう。'},
+   rv:{kw:['財政問題','家族の不和','遺産トラブル','不安定'],msg:'家族や長期的な財産に関する問題が生じていませんか？オープンな対話で解決の糸口を見つけましょう。'}},
+  {n:'Page',ja:'ペンタクルのペイジ',en:'Page of Pentacles',sym:'🌿',suit:'pentacles',
+   up:{kw:['実用的','勤勉','新しいスキル','学習'],msg:'新しいスキルや知識を着実に積み上げている時期です。実用的なアプローチで夢を現実に変えましょう。'},
+   rv:{kw:['非実用的','怠惰','現実逃避','機会損失'],msg:'目標に向けた具体的な行動が不足していませんか？小さな一歩から始めることが大切です。'}},
+  {n:'Knight',ja:'ペンタクルのナイト',en:'Knight of Pentacles',sym:'🌿',suit:'pentacles',
+   up:{kw:['方法論的','勤勉','信頼性','忍耐'],msg:'堅実で着実な行動で目標に向かっています。信頼性と粘り強さがあなたの最大の強みです。'},
+   rv:{kw:['停滞','頑固','融通が利かない','退屈'],msg:'一つのやり方に固執しすぎていませんか？新しいアプローチを試してみることで、突破口が開けます。'}},
+  {n:'Queen',ja:'ペンタクルのクイーン',en:'Queen of Pentacles',sym:'🌿',suit:'pentacles',
+   up:{kw:['実用的な養育','豊かさ','地に足ついた','思いやり'],msg:'実用的な知恵と温かい心で周囲を支えています。自分自身と家族への愛情が豊かな実を結ぶでしょう。'},
+   rv:{kw:['ワーカホリック','物質主義','養育の欠如','自己犠牲'],msg:'自分を犠牲にして他者のために尽くしすぎていませんか？自己ケアも同様に大切にしましょう。'}},
+  {n:'King',ja:'ペンタクルのキング',en:'King of Pentacles',sym:'🌿',suit:'pentacles',
+   up:{kw:['財政的な成功','リーダーシップ','安定','実績'],msg:'実績と信頼に裏打ちされたリーダーシップで、安定した豊かさを実現しています。その知恵と経験を活かしましょう。'},
+   rv:{kw:['物質主義','強欲','財産への執着','頑固'],msg:'物質的な成功にとらわれすぎていませんか？本当の豊かさは人との繋がりや精神的な充足にもあります。'}}
 ];
 
-const POS_LABELS = ["過去", "現在", "未来"];
-let drawn = [], question = "", flipped = 0;
+// ───────────────────────────────────────────────
+// SPREADS
+// ───────────────────────────────────────────────
+const SPREADS = [
+  {id:'one',name:'ワンオラクル',count:1,positions:['今この瞬間のメッセージ'],desc:'今この瞬間のメッセージ'},
+  {id:'timeline',name:'タイムライン',count:3,positions:['過去','現在','未来'],desc:'過去・現在・未来'},
+  {id:'advice',name:'アドバイス',count:3,positions:['状況','課題','アドバイス'],desc:'状況・課題・アドバイス'},
+  {id:'mindbodysoul',name:'心体魂',count:3,positions:['思考','感情','魂'],desc:'思考・感情・魂'},
+  {id:'five',name:'ファイブカード',count:5,positions:['現在','障害','アドバイス','外部影響','結果'],desc:'現在・障害・アドバイス・外部影響・結果'}
+];
 
-/* ─────────────────── LOGIC ─────────────────── */
-function startReading() {
-  const q = document.getElementById('questionInput').value.trim();
-  if (!q) {
-    const el = document.getElementById('questionInput');
-    el.classList.add('error');
-    el.focus();
-    setTimeout(() => el.classList.remove('error'), 2000);
-    return;
+// ───────────────────────────────────────────────
+// APP STATE
+// ───────────────────────────────────────────────
+let state = {
+  question: '',
+  spread: null,
+  pickedIndices: [],
+  drawnCards: [], // {card, reversed}
+  flippedCount: 0
+};
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
   }
-  question = q;
-  flipped = 0;
-
-  show('phaseShuffle');
-  drawn = shuffle([...CARDS]).slice(0, 3).map(c => ({ ...c, rev: Math.random() > 0.65 }));
-  setTimeout(() => { show('phaseCards'); renderCards(); }, 2000);
+  return a;
 }
 
-function renderCards() {
-  document.getElementById('qDisplay').textContent = `「${question}」`;
-  const row = document.getElementById('cardsRow');
+// ───────────────────────────────────────────────
+// PHASE HELPERS
+// ───────────────────────────────────────────────
+function showPhase(id) {
+  document.querySelectorAll('.phase').forEach(el => el.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+}
+
+function showShuffle(cb) {
+  const ov = document.getElementById('shuffle-overlay');
+  ov.classList.remove('hidden');
+  setTimeout(() => {
+    ov.classList.add('hidden');
+    cb();
+  }, 1800);
+}
+
+// ───────────────────────────────────────────────
+// PHASE: QUESTION
+// ───────────────────────────────────────────────
+document.getElementById('btn-to-spread').addEventListener('click', () => {
+  const q = document.getElementById('question-input').value.trim();
+  state.question = q || '（質問なし）';
+  buildSpreadGrid();
+  showPhase('phase-spread');
+});
+
+// ───────────────────────────────────────────────
+// PHASE: SPREAD SELECTION
+// ───────────────────────────────────────────────
+function buildSpreadGrid() {
+  const grid = document.getElementById('spread-grid');
+  grid.innerHTML = '';
+  state.spread = null;
+  document.getElementById('btn-to-pick').disabled = true;
+
+  SPREADS.forEach(sp => {
+    const card = document.createElement('div');
+    card.className = 'spread-card';
+    card.innerHTML = `
+      <div class="spread-card-name">${sp.name}</div>
+      <div class="spread-card-count">${sp.count}枚引き</div>
+      <div class="spread-card-desc">「${sp.desc}」</div>
+    `;
+    card.addEventListener('click', () => {
+      grid.querySelectorAll('.spread-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      state.spread = sp;
+      document.getElementById('btn-to-pick').disabled = false;
+    });
+    grid.appendChild(card);
+  });
+}
+
+document.getElementById('btn-to-pick').addEventListener('click', () => {
+  showShuffle(() => buildFanPick());
+});
+
+// ───────────────────────────────────────────────
+// PHASE: FAN PICK
+// ───────────────────────────────────────────────
+function buildFanPick() {
+  state.pickedIndices = [];
+  showPhase('phase-pick');
+
+  const sp = state.spread;
+  document.getElementById('fan-title').textContent = `✦ ${sp.name}のカードを選んでください ✦`;
+  updatePickCounter();
+
+  const container = document.getElementById('fan-container');
+  container.innerHTML = '';
+
+  const total = 13;
+  const cards = [];
+
+  for (let i = 0; i < total; i++) {
+    const el = document.createElement('div');
+    el.className = 'fan-card';
+    el.innerHTML = `<div class="card-back-inner">✦</div>`;
+    el.dataset.index = i;
+
+    const t = i / (total - 1);
+    const angle = -30 + t * 60;
+    const lift = -Math.abs(t - 0.5) * 40;
+    el.style.left = `${(i / (total - 1)) * 78 + 5}%`;
+    el.style.zIndex = i < total / 2 ? i : total - i;
+    el.dataset.angle = angle;
+    el.dataset.lift = lift;
+    el.style.transform = `rotate(${angle}deg) translateY(${lift}px)`;
+    el.style.transformOrigin = 'bottom center';
+
+    el.addEventListener('mouseenter', () => {
+      if (!el.classList.contains('picked')) {
+        el.style.transform = `rotate(${angle}deg) translateY(${lift - 25}px)`;
+        el.style.zIndex = 50;
+      }
+    });
+    el.addEventListener('mouseleave', () => {
+      if (!el.classList.contains('picked')) {
+        el.style.transform = `rotate(${angle}deg) translateY(${lift}px)`;
+        el.style.zIndex = i < total / 2 ? i : total - i;
+      }
+    });
+
+    el.addEventListener('click', () => handleFanPick(el, i, angle, lift));
+    container.appendChild(el);
+    cards.push(el);
+  }
+
+  document.getElementById('btn-confirm-pick').classList.add('hidden');
+}
+
+function handleFanPick(el, idx, angle, lift) {
+  const sp = state.spread;
+  if (el.classList.contains('picked')) {
+    // Deselect
+    el.classList.remove('picked');
+    state.pickedIndices = state.pickedIndices.filter(x => x !== idx);
+    el.style.transform = `rotate(${angle}deg) translateY(${lift}px)`;
+    el.style.zIndex = idx < 6 ? idx : 13 - idx;
+  } else {
+    if (state.pickedIndices.length >= sp.count) return;
+    el.classList.add('picked');
+    state.pickedIndices.push(idx);
+    el.style.transform = `rotate(${angle}deg) translateY(${lift - 30}px)`;
+    el.style.zIndex = 60 + state.pickedIndices.length;
+  }
+  updatePickCounter();
+  const confirmBtn = document.getElementById('btn-confirm-pick');
+  if (state.pickedIndices.length === sp.count) {
+    confirmBtn.classList.remove('hidden');
+  } else {
+    confirmBtn.classList.add('hidden');
+  }
+}
+
+function updatePickCounter() {
+  const sp = state.spread;
+  const picked = state.pickedIndices.length;
+  document.getElementById('pick-counter').textContent =
+    `${sp.count}枚選んでください (${picked}/${sp.count})`;
+}
+
+document.getElementById('btn-confirm-pick').addEventListener('click', () => {
+  // Draw cards randomly (with reversal)
+  const shuffled = shuffle(CARDS);
+  state.drawnCards = shuffled.slice(0, state.spread.count).map(card => ({
+    card,
+    reversed: Math.random() < 0.3
+  }));
+  showShuffle(() => buildReading());
+});
+
+// ───────────────────────────────────────────────
+// PHASE: READING
+// ───────────────────────────────────────────────
+function buildReading() {
+  showPhase('phase-reading');
+  state.flippedCount = 0;
+
+  document.getElementById('reading-question-display').textContent =
+    `「 ${state.question} 」`;
+
+  const row = document.getElementById('cards-row');
   row.innerHTML = '';
-  drawn.forEach((card, i) => {
+
+  const result = document.getElementById('reading-result');
+  result.innerHTML = '';
+  result.classList.add('hidden');
+
+  document.getElementById('btn-reset').classList.add('hidden');
+
+  state.drawnCards.forEach((drawn, i) => {
+    const pos = state.spread.positions[i];
     const slot = document.createElement('div');
     slot.className = 'card-slot';
-    slot.innerHTML = `
-      <span class="pos-label">${POS_LABELS[i]}</span>
-      <div class="card-flip" id="cf${i}" onclick="flipCard(${i})">
-        <div class="inner">
-          <div class="card-back">
-            <div class="card-back-inner">
-              <span class="card-back-rune">✦</span>
-            </div>
-          </div>
-          <div class="card-face${card.rev ? ' reversed' : ''}">
-            <span class="c-number">${card.n}</span>
-            <span class="c-symbol">${card.sym}</span>
-            <div class="c-names">
-              <div class="c-name-ja">${card.ja}</div>
-              <div class="c-name-en">${card.en}</div>
-              ${card.rev ? '<div class="c-rev-badge">逆位置</div>' : ''}
-            </div>
-          </div>
-        </div>
-      </div>`;
+
+    const posLabel = document.createElement('div');
+    posLabel.className = 'card-position-label';
+    posLabel.textContent = pos;
+
+    const flipCard = document.createElement('div');
+    flipCard.className = 'flip-card';
+    flipCard.title = 'クリックしてカードをめくる';
+
+    const inner = document.createElement('div');
+    inner.className = 'flip-card-inner';
+
+    // Back face
+    const back = document.createElement('div');
+    back.className = 'flip-card-back';
+    back.textContent = '✦';
+
+    // Front face
+    const front = document.createElement('div');
+    front.className = 'flip-card-face';
+    front.dataset.suit = drawn.card.suit;
+
+    const content = document.createElement('div');
+    content.className = 'card-content' + (drawn.reversed ? ' reversed' : '');
+
+    const sym = document.createElement('div');
+    sym.className = 'card-sym';
+    sym.textContent = drawn.card.sym;
+
+    const num = document.createElement('div');
+    num.className = 'card-num';
+    num.textContent = drawn.card.n;
+
+    const nameJa = document.createElement('div');
+    nameJa.className = 'card-name-ja';
+    nameJa.textContent = drawn.card.ja;
+
+    const nameEn = document.createElement('div');
+    nameEn.className = 'card-name-en';
+    nameEn.textContent = drawn.card.en;
+
+    content.append(sym, num, nameJa, nameEn);
+
+    if (drawn.reversed) {
+      const badge = document.createElement('div');
+      badge.className = 'card-reversed-badge';
+      badge.textContent = '逆位置';
+      content.appendChild(badge);
+    }
+
+    front.appendChild(content);
+    inner.append(back, front);
+    flipCard.appendChild(inner);
+
+    let flipped = false;
+    flipCard.addEventListener('click', () => {
+      if (flipped) return;
+      flipped = true;
+      flipCard.classList.add('flipped');
+      flipCard.style.cursor = 'default';
+      state.flippedCount++;
+      if (state.flippedCount === state.drawnCards.length) {
+        setTimeout(() => showReadingResult(), 600);
+      }
+    });
+
+    slot.append(posLabel, flipCard);
     row.appendChild(slot);
   });
 }
 
-function flipCard(i) {
-  const el = document.getElementById('cf' + i);
-  if (el.classList.contains('flipped')) return;
-  el.classList.add('flipped');
-  flipped++;
-  if (flipped === 3) setTimeout(showReading, 900);
-}
+function showReadingResult() {
+  const result = document.getElementById('reading-result');
+  result.innerHTML = '';
+  result.classList.remove('hidden');
 
-function showReading() {
-  show('phaseReading');
-  document.getElementById('readingQ').textContent = `「${question}」についての答え`;
-  const container = document.getElementById('readingCards');
-  container.innerHTML = '';
+  state.drawnCards.forEach((drawn, i) => {
+    const pos = state.spread.positions[i];
+    const meaning = drawn.reversed ? drawn.card.rv : drawn.card.up;
 
-  drawn.forEach((card, i) => {
-    const m = card.rev ? card.rv : card.up;
-    const div = document.createElement('div');
-    div.className = 'card-reading';
-    div.innerHTML = `
-      <div class="reading-card-header">
-        <span class="r-symbol">${card.sym}</span>
-        <div>
-          <div class="r-pos">${POS_LABELS[i]}のカード</div>
-          <div class="r-name">${card.ja}${card.rev ? '（逆位置）' : ''}</div>
-        </div>
-      </div>
-      <p class="r-text">${m.msg}</p>
-      <div class="keywords">${m.kw.map(k => `<span class="kw-tag">${k}</span>`).join('')}</div>`;
-    container.appendChild(div);
-  });
+    const block = document.createElement('div');
+    block.className = 'reading-card-block';
+    block.dataset.suit = drawn.card.suit;
 
-  const overall = document.createElement('div');
-  overall.className = 'overall-box';
-  overall.innerHTML = `
-    <div class="overall-title">✦ 総合メッセージ ✦</div>
-    <p class="overall-text">${buildOverall()}</p>`;
-  container.appendChild(overall);
-}
+    const header = document.createElement('div');
+    header.className = 'reading-block-header';
 
-function buildOverall() {
-  const [past, present, future] = drawn;
-  const pk = (card) => (card.rev ? card.rv : card.up).kw[0];
-  const pn = (card) => `${card.ja}${card.rev ? '（逆位置）' : ''}`;
-  return `過去の「${pn(past)}」が示す${pk(past)}という経験が、現在の「${pn(present)}」が表す${pk(present)}という状況を生み出しています。タロットは、この流れの先に「${pn(future)}」という${pk(future)}のエネルギーが待っていることを告げています。今の自分を信じ、一歩一歩前進することで、あなたが求める答えは自然と形になっていくでしょう。宇宙はいつもあなたを導いています。`;
-}
+    const posSpan = document.createElement('span');
+    posSpan.className = 'reading-position';
+    posSpan.textContent = pos;
 
-function resetAll() {
-  document.getElementById('questionInput').value = '';
-  flipped = 0;
-  show('phaseInput');
-}
+    const title = document.createElement('span');
+    title.className = 'reading-card-title';
+    title.textContent = `${drawn.card.sym} ${drawn.card.ja}`;
 
-function show(id) {
-  ['phaseInput','phaseShuffle','phaseCards','phaseReading'].forEach(p => {
-    document.getElementById(p).classList.toggle('hidden', p !== id);
-  });
-}
+    header.append(posSpan, title);
 
-function shuffle(arr) {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
-
-/* ─────────────────── STARFIELD ─────────────────── */
-(function () {
-  const canvas = document.getElementById('bg-canvas');
-  const ctx = canvas.getContext('2d');
-  let stars = [], shooting = [], W, H;
-
-  function resize() {
-    W = canvas.width  = window.innerWidth;
-    H = canvas.height = window.innerHeight;
-    initStars();
-  }
-
-  function initStars() {
-    stars = Array.from({ length: 220 }, () => ({
-      x: Math.random() * W,
-      y: Math.random() * H,
-      r: Math.random() * 1.5 + 0.2,
-      o: Math.random(),
-      speed: Math.random() * 0.018 + 0.005,
-      dir: Math.random() > .5 ? 1 : -1,
-    }));
-  }
-
-  function spawnShooting() {
-    if (Math.random() < 0.004) {
-      shooting.push({
-        x: Math.random() * W, y: Math.random() * H * 0.5,
-        len: Math.random() * 120 + 60,
-        speed: Math.random() * 8 + 6,
-        angle: Math.PI / 6,
-        life: 1,
-      });
+    if (drawn.reversed) {
+      const tag = document.createElement('span');
+      tag.className = 'reading-reversed-tag';
+      tag.textContent = '逆位置';
+      header.appendChild(tag);
     }
-  }
 
-  function draw() {
-    ctx.clearRect(0, 0, W, H);
-
-    // Background
-    const grad = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, Math.max(W, H) * .8);
-    grad.addColorStop(0, '#0e0230');
-    grad.addColorStop(.5, '#07011a');
-    grad.addColorStop(1, '#020008');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    // Stars
-    stars.forEach(s => {
-      s.o += s.speed * s.dir;
-      if (s.o >= 1 || s.o <= .05) s.dir *= -1;
-      ctx.beginPath();
-      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255,255,255,${s.o.toFixed(2)})`;
-      ctx.fill();
+    const kwRow = document.createElement('div');
+    kwRow.className = 'reading-kw';
+    meaning.kw.forEach(k => {
+      const s = document.createElement('span');
+      s.textContent = k;
+      kwRow.appendChild(s);
     });
 
-    // Shooting stars
-    spawnShooting();
-    shooting = shooting.filter(s => {
-      s.x += Math.cos(s.angle) * s.speed;
-      s.y += Math.sin(s.angle) * s.speed;
-      s.life -= 0.022;
-      const tail = ctx.createLinearGradient(s.x, s.y, s.x - Math.cos(s.angle)*s.len, s.y - Math.sin(s.angle)*s.len);
-      tail.addColorStop(0, `rgba(255,240,200,${s.life.toFixed(2)})`);
-      tail.addColorStop(1, 'rgba(255,240,200,0)');
-      ctx.beginPath();
-      ctx.moveTo(s.x, s.y);
-      ctx.lineTo(s.x - Math.cos(s.angle)*s.len, s.y - Math.sin(s.angle)*s.len);
-      ctx.strokeStyle = tail;
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-      return s.life > 0;
-    });
+    const msg = document.createElement('p');
+    msg.className = 'reading-msg';
+    msg.textContent = meaning.msg;
 
-    requestAnimationFrame(draw);
-  }
+    block.append(header, kwRow, msg);
+    result.appendChild(block);
+  });
 
-  window.addEventListener('resize', resize);
-  resize();
-  draw();
-})();
+  document.getElementById('btn-reset').classList.remove('hidden');
+}
+
+// ───────────────────────────────────────────────
+// RESET
+// ───────────────────────────────────────────────
+document.getElementById('btn-reset').addEventListener('click', () => {
+  state = { question: '', spread: null, pickedIndices: [], drawnCards: [], flippedCount: 0 };
+  document.getElementById('question-input').value = '';
+  showPhase('phase-question');
+});
 </script>
 </body>
 </html>
