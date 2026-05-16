@@ -168,10 +168,12 @@
     }
 
     /* Flip effects */
-    .sparkle{position:fixed;width:5px;height:5px;border-radius:50%;background:var(--gold);pointer-events:none;z-index:9999;animation:sparkleFly .75s ease-out forwards}
+    .sparkle{position:fixed;border-radius:50%;pointer-events:none;z-index:9999;animation:sparkleFly var(--dur,.75s) ease-out forwards}
     @keyframes sparkleFly{from{opacity:1;transform:translate(-50%,-50%) scale(1)}to{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(0)}}
-    .flip-ring{position:absolute;inset:-4px;border-radius:14px;border:2px solid var(--gold);pointer-events:none;animation:ringExpand .65s ease-out forwards;z-index:5}
-    @keyframes ringExpand{from{opacity:.85;transform:scale(1)}to{opacity:0;transform:scale(1.7)}}
+    .flip-ring{position:absolute;inset:-6px;border-radius:16px;border:3px solid var(--gold);pointer-events:none;animation:ringExpand var(--rdur,.72s) ease-out var(--rdel,0s) both;z-index:5}
+    @keyframes ringExpand{from{opacity:.95;transform:scale(1)}to{opacity:0;transform:scale(2.2)}}
+    @keyframes glowFade{from{opacity:1}to{opacity:0}}
+    @keyframes cardFlash{0%,100%{filter:brightness(1)}35%{filter:brightness(2.8) saturate(2)}}
 
     /* Settings button */
     .settings-btn{position:fixed;top:1rem;right:1rem;z-index:200;background:rgba(20,5,45,.88);border:1px solid var(--border);border-radius:50%;width:40px;height:40px;color:var(--gold);font-size:1.05rem;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);transition:all .3s;line-height:1}
@@ -898,30 +900,56 @@ function showReadingResult() {
 // FLIP EFFECTS
 // ───────────────────────────────────────────────
 function triggerFlipEffect(flipCard) {
-  const ring = document.createElement('div');
-  ring.className = 'flip-ring';
   flipCard.style.position = 'relative';
-  flipCard.appendChild(ring);
-  setTimeout(() => ring.remove(), 700);
+
+  // 3 staggered rings with different colors
+  [['#d4a843','.72s','0s'], ['rgba(200,150,255,.9)','.85s','.1s'], ['rgba(255,255,255,.7)','1s','.22s']]
+    .forEach(([color, dur, del]) => {
+      const ring = document.createElement('div');
+      ring.className = 'flip-ring';
+      ring.style.setProperty('--rdur', dur);
+      ring.style.setProperty('--rdel', del);
+      ring.style.borderColor = color;
+      flipCard.appendChild(ring);
+      setTimeout(() => ring.remove(), 1200);
+    });
+
+  // Card face flash
+  const face = flipCard.querySelector('.flip-card-face');
+  if (face) { face.style.animation = 'cardFlash .5s ease-out'; setTimeout(() => face.style.animation = '', 500); }
 
   const rect = flipCard.getBoundingClientRect();
   const cx = rect.left + rect.width / 2;
   const cy = rect.top + rect.height / 2;
-  const colors = ['#d4a843','#e8c870','#fff3b0','#c8b4e8'];
 
-  for (let i = 0; i < 10; i++) {
-    const angle = (i / 10) * Math.PI * 2 + Math.random() * .3;
-    const dist = 40 + Math.random() * 40;
-    const sp = document.createElement('div');
-    sp.className = 'sparkle';
-    sp.style.cssText = `left:${cx}px;top:${cy}px;background:${colors[i%colors.length]};
-      width:${3+Math.random()*4}px;height:${3+Math.random()*4}px;
-      animation-delay:${Math.random()*.12}s;animation-duration:${.55+Math.random()*.3}s`;
-    sp.style.setProperty('--dx', `${Math.cos(angle)*dist}px`);
-    sp.style.setProperty('--dy', `${Math.sin(angle)*dist}px`);
-    document.body.appendChild(sp);
-    setTimeout(() => sp.remove(), 1000);
-  }
+  // Screen-wide glow from card position
+  const glow = document.createElement('div');
+  glow.style.cssText = `position:fixed;inset:0;pointer-events:none;z-index:9990;
+    background:radial-gradient(circle at ${cx}px ${cy}px,rgba(212,168,67,.22) 0%,rgba(155,61,171,.1) 40%,transparent 68%);
+    animation:glowFade .8s ease-out forwards`;
+  document.body.appendChild(glow);
+  setTimeout(() => glow.remove(), 900);
+
+  // Sparkle waves
+  const colors = ['#ffd700','#ffe88a','#ffffff','#d4b8ff','#ffb06a','#aee0ff'];
+  const wave = (n, delay, minDist, maxDist) => {
+    for (let i = 0; i < n; i++) {
+      const angle = (i / n) * Math.PI * 2 + Math.random() * .6;
+      const dist = minDist + Math.random() * (maxDist - minDist);
+      const sp = document.createElement('div');
+      const size = 3 + Math.random() * 6;
+      sp.className = 'sparkle';
+      sp.style.cssText = `left:${cx}px;top:${cy}px;background:${colors[i%colors.length]};
+        width:${size}px;height:${size}px;
+        --dx:${Math.cos(angle)*dist}px;--dy:${Math.sin(angle)*dist}px;
+        --dur:${.6+Math.random()*.5}s;animation-delay:${delay+Math.random()*.1}s`;
+      document.body.appendChild(sp);
+      setTimeout(() => sp.remove(), 1500);
+    }
+  };
+  wave(16, 0,   50, 90);
+  wave(14, .1,  80, 130);
+  wave(8,  .2,  25, 50);
 }
 
 // ───────────────────────────────────────────────
@@ -954,21 +982,14 @@ ${cardList}
 各カードが質問に対してどのような意味を持つかを読み解き、最後に総合的なアドバイスをお伝えください。神秘的でありながら実践的な内容で、450文字程度でお願いします。`;
 
   try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-        'anthropic-dangerous-allow-browser': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 700,
-        stream: true,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
+    const isLocal = location.protocol === 'http:';
+    const payload = { model: 'claude-sonnet-4-5', max_tokens: 700, stream: true, messages: [{ role: 'user', content: prompt }] };
+    const resp = await fetch(
+      isLocal ? '/api/read' : 'https://api.anthropic.com/v1/messages',
+      isLocal
+        ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ apiKey, ...payload }) }
+        : { method: 'POST', headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'anthropic-dangerous-allow-browser': 'true' }, body: JSON.stringify(payload) }
+    );
 
     if (!resp.ok) {
       const err = await resp.json().catch(() => ({}));
