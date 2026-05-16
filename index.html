@@ -62,11 +62,19 @@
     .fan-title{font-family:'Cinzel',serif;font-size:.85rem;color:var(--purple-light);letter-spacing:.15em;text-align:center}
     .pick-counter{font-size:.95rem;color:var(--text);text-align:center;opacity:.88}
     .fan-container{position:relative;width:100%;max-width:680px;margin:.5rem auto}
-    .pick-grid{display:grid;grid-template-columns:repeat(13,1fr);gap:3px;width:100%;padding:.6rem;background:rgba(255,255,255,.02);border-radius:12px;border:1px solid var(--border)}
-    .pick-card{aspect-ratio:2/3.2;background:linear-gradient(160deg,#140030,#090018);border:1px solid rgba(212,168,67,.22);border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.7rem;color:rgba(212,168,67,.3);transition:border-color .15s,box-shadow .15s,transform .15s;transform:rotate(var(--rot,0deg));position:relative}
-    .pick-card:hover{border-color:rgba(212,168,67,.65);box-shadow:0 0 8px rgba(212,168,67,.25);transform:rotate(var(--rot,0deg)) scale(1.12);z-index:2}
-    .pick-card.picked{border-color:var(--gold);background:linear-gradient(160deg,#200045,#0f0025);box-shadow:0 0 10px rgba(212,168,67,.5);color:rgba(212,168,67,.7)}
-    @media(max-width:520px){.pick-grid{grid-template-columns:repeat(9,1fr)}}
+    .pick-rows{display:flex;flex-direction:column;gap:10px;width:100%}
+    .pick-row{display:flex;flex-wrap:nowrap;padding-bottom:8px}
+    .pick-card{width:56px;height:90px;flex-shrink:0;margin-right:-36px;background:linear-gradient(160deg,#140030,#090018);border:1px solid rgba(212,168,67,.28);border-radius:6px;cursor:pointer;position:relative;transition:margin-right .18s ease,transform .18s ease,box-shadow .18s,border-color .15s;z-index:1}
+    .pick-card:last-child{margin-right:0}
+    .pick-card-inner{width:100%;height:100%;display:flex;align-items:center;justify-content:center;border-radius:5px;pointer-events:none}
+    .pick-card-sym{font-size:.85rem;color:rgba(212,168,67,.3)}
+    .pick-card:hover{margin-right:-18px;transform:translateY(-8px);box-shadow:0 6px 16px rgba(0,0,0,.5),0 0 10px rgba(212,168,67,.3);border-color:rgba(212,168,67,.6);z-index:30}
+    .pick-card.picked{margin-right:-18px;transform:translateY(-10px);border-color:var(--gold);background:linear-gradient(160deg,#1e0042,#0d001e);box-shadow:0 6px 20px rgba(0,0,0,.5),0 0 16px rgba(212,168,67,.55);z-index:30}
+    .pick-card.picked .pick-card-sym{color:rgba(212,168,67,.75)}
+    @media(max-width:520px){
+      .pick-card{width:44px;height:70px;margin-right:-28px;border-radius:4px}
+      .pick-card:hover,.pick-card.picked{margin-right:-12px}
+    }
 
     /* Reading phase */
     .reading-question{font-size:.9rem;color:var(--purple-light);text-align:center;opacity:.8;font-style:italic;max-width:520px}
@@ -661,19 +669,26 @@ function buildGridPick() {
   const container = document.getElementById('fan-container');
   container.innerHTML = '';
 
-  const grid = document.createElement('div');
-  grid.className = 'pick-grid';
+  const rowsEl = document.createElement('div');
+  rowsEl.className = 'pick-rows';
 
-  for (let i = 0; i < 78; i++) {
-    const el = document.createElement('div');
-    el.className = 'pick-card';
-    el.textContent = '✦';
-    el.style.setProperty('--rot', `${(Math.random() - 0.5) * 5}deg`);
-    el.addEventListener('click', () => handleGridPick(el, i));
-    grid.appendChild(el);
+  const perRow = 26; // 3 rows of 26 = 78
+  for (let r = 0; r < 3; r++) {
+    const rowEl = document.createElement('div');
+    rowEl.className = 'pick-row';
+    const start = r * perRow;
+    const end = Math.min(start + perRow, 78);
+    for (let i = start; i < end; i++) {
+      const el = document.createElement('div');
+      el.className = 'pick-card';
+      el.innerHTML = '<div class="pick-card-inner"><span class="pick-card-sym">✦</span></div>';
+      el.addEventListener('click', () => handleGridPick(el, i));
+      rowEl.appendChild(el);
+    }
+    rowsEl.appendChild(rowEl);
   }
 
-  container.appendChild(grid);
+  container.appendChild(rowsEl);
   document.getElementById('btn-confirm-pick').classList.add('hidden');
 }
 
@@ -949,7 +964,8 @@ ${cardList}
       headers: {
         'x-api-key': apiKey,
         'anthropic-version': '2023-06-01',
-        'content-type': 'application/json'
+        'content-type': 'application/json',
+        'anthropic-dangerous-allow-browser': 'true'
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
